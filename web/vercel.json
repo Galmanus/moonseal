@@ -1,5 +1,5 @@
 {
   "buildCommand": "node build-demo-config.mjs",
   "outputDirectory": ".",
-  "redirects": [{ "source": "/", "destination": "/app.html", "permanent": false }]
+  "routes": [{ "src": "^/$", "dest": "/app.html" }]
 }

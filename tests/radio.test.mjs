@@ -68,6 +68,30 @@ test('DSN Now feed: keeps Moon spacecraft only, with dish, complex and time', ()
   assert.equal(k.rangeKm, null);          // -1 in the feed: no range reported
 });
 
+test('DSN Now feed: each Moon spacecraft carries its complex code and a short name', () => {
+  const k = Radio.parseFeed(XML).moon.find(x => x.code === 'KPLO');
+  assert.equal(k.station, 'gdscc');
+  assert.equal(k.short, 'Danuri (Korea)');
+});
+
+test('cross-check against real NASA data: when a Goldstone dish was pointed at Danuri, our Moon is in Goldstone\'s sky', () => {
+  const r = Radio.parseFeed(XML), k = r.moon.find(x => x.code === 'KPLO');
+  const c = Radio.crossCheck(k, r.time);
+  assert.equal(c.station.key, 'goldstone');
+  assert.equal(c.agree, true, 'Moon at ' + c.el.toFixed(2) + ' deg');
+});
+
+test('cross-check says "disagrees" when the Moon is below that complex (JPL Horizons truth)', () => {
+  const row = H.rows[0];                                   // 2026-01-01 00:00 UTC
+  const ms = Date.parse(row.utc);
+  assert.ok(row.goldstone > 0 && row.canberra < 0);        // the fixture's own truth at that minute
+  const up = Radio.crossCheck({ station: 'gdscc' }, ms), down = Radio.crossCheck({ station: 'cdscc' }, ms);
+  assert.equal(up.agree, true);
+  assert.ok(Math.abs(up.el - row.goldstone) < 0.5);
+  assert.equal(down.agree, false);
+  assert.equal(Radio.crossCheck({ station: 'nowhere' }, ms), null);
+});
+
 test('DSN Now feed: an active downlink comes out with band, power and data rate', () => {
   const xml = '<dsn><station name="cdscc" friendlyName="Canberra" timeUTC="1" timeZoneOffset="0"/>' +
     '<dish name="DSS34" azimuthAngle="120" elevationAngle="41" windSpeed="5" isMSPA="false" isArray="false" isDDOR="false" activity="Spacecraft Telemetry, Tracking, and Command">' +

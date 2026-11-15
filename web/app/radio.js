@@ -119,6 +119,9 @@
     CH2L: 'Chandrayaan-2 Lander (ISRO)', CH3: 'Chandrayaan-3 (ISRO)', EM2: 'Artemis II (NASA)',
     EM3: 'Artemis III (NASA)', LTB: 'Lunar Trailblazer (NASA)', LND1: 'Lunar Node 1', ARGO: 'ArgoMoon', LFL: 'Lunar Flashlight'
   };
+  var SHORT = { LRO: 'LRO (NASA)', KPLO: 'Danuri (Korea)', CAPS: 'CAPSTONE (NASA)', CH2: 'Chandrayaan-2 (India)',
+                CH2O: 'Chandrayaan-2 (India)', CH2L: 'Chandrayaan-2 lander (India)', CH3: 'Chandrayaan-3 (India)',
+                EM2: 'Artemis II (NASA)', EM3: 'Artemis III (NASA)', LTB: 'Lunar Trailblazer (NASA)' };
   function attrs(tag) { var o = {}; tag.replace(/([A-Za-z]+)="([^"]*)"/g, function (_, k, v) { o[k] = v; return ''; }); return o; }
 
   function parseFeed(xml) {
@@ -135,7 +138,8 @@
         if (!MOON_CRAFT[code]) return;
         var mine = function (x) { return String(x.spacecraft || '').toUpperCase() === code && x.active === 'true'; };
         var dn = downs.filter(mine)[0];
-        out.push({ code: code, craft: MOON_CRAFT[code], dish: dish.name, complex: station ? station.friendlyName : '',
+        out.push({ code: code, craft: MOON_CRAFT[code], short: SHORT[code] || MOON_CRAFT[code], dish: dish.name,
+                   station: station ? station.name : '', complex: station ? station.friendlyName : '',
                    dishEl: +dish.elevationAngle, rangeKm: +tg.downlegRange > 0 ? +tg.downlegRange : null,
                    rtltS: +tg.rtlt > 0 ? +tg.rtlt : null,
                    down: dn ? { band: dn.band, dBm: +dn.power, bps: +dn.dataRate } : null,
@@ -144,6 +148,16 @@
     }
     var ts = xml.match(/<timestamp>(\d+)<\/timestamp>/);
     return { time: ts ? +ts[1] : null, moon: out };
+  }
+
+  /* Does our math agree with what NASA is doing? A dish working a Moon spacecraft needs the Moon above that
+     complex's horizon. Returns {station, el, agree}, or null for a complex we do not know. */
+  function crossCheck(entry, ms) {
+    var st = null;
+    for (var k = 0; k < DSN.length; k++) if (DSN[k].code === entry.station) st = DSN[k];
+    if (!st) return null;
+    var el = moonEl(st, ms);
+    return { station: st, el: el, agree: el > 0 };
   }
 
   function live(fetchImpl) {
@@ -156,5 +170,5 @@
 
   root.Radio = { DSN: DSN, MIN_EL: MIN_EL, REF: REF, moon: moon, gmst: gmst, moonEl: moonEl, bestDish: bestDish,
                  coverage: coverage, budget: budget, signalAt: signalAt, linkPct: linkPct,
-                 parseFeed: parseFeed, live: live, FEED: FEED };
+                 parseFeed: parseFeed, crossCheck: crossCheck, live: live, FEED: FEED };
 })(typeof window !== 'undefined' ? window : globalThis);

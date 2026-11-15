@@ -111,6 +111,8 @@
     $('#heroChips').innerHTML =
       '<button class="chip primary" id="heroGo">Choose a landing site ›</button>';
     $('#heroWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };   // the one entry to the sheet
+    liveMoon();                                                                       // NASA's dishes and the Moon, this minute
+    setInterval(function () { if (document.visibilityState === 'visible' && !$('#hero').hidden) liveMoon(); }, 60000);
     $('#heroChips').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       if (b.id === 'heroGo') goStep(1);
@@ -713,6 +715,27 @@
     }
     var lk = $('#mLink'); if (lk) lk.textContent = Math.floor(Radio.linkPct(m, ms.a, ms.b) * 100) + '%';   // floored: 100% only when every hour has a link
   }
+  /* Live, on the first screen: what NASA's Deep Space Network is doing with Moon spacecraft this minute (DSN Now) and
+     whether our own math agrees that the Moon is in that dish's sky. Feed text is escaped or coerced to numbers. */
+  function liveMoon() {
+    var box = $('#liveMoon'), txt = $('#liveTxt');
+    if (!box || !txt || !window.Radio) return;
+    Radio.live().then(function (r) {
+      var now = r.time || Date.now(), x = r.moon.filter(function (m) { return m.down; })[0] || r.moon[0], html;
+      if (x) {
+        var c = Radio.crossCheck(x, now);
+        html = '<b>Live</b> · NASA’s ' + esc(x.complex) + ' dish ' + esc(x.dish) + ' is ' + (x.down ? 'hearing ' : 'pointed at ') + '<b>' + esc(x.short) + '</b>, at the Moon' +
+          (x.down ? ', ' + (+x.down.dBm).toFixed(0) + ' dBm' + (x.down.bps > 0 ? ', ' + rate(+x.down.bps) : '') : '') + '.' +
+          (c ? ' Our math puts the Moon ' + Math.round(c.el) + '° up at ' + esc(c.station.name) + ': ' + (c.agree ? '<span class="ok">agrees ✓</span>' : '<span class="bad">disagrees</span>') + '.' : '');
+      } else {
+        var b = Radio.bestDish(now);
+        html = '<b>Live</b> · No Moon spacecraft on a NASA dish this minute. ' +
+          (b.el > 0 ? 'Our math puts the Moon ' + Math.round(b.el) + '° up at ' + esc(b.station.name) + '.' : 'Our math: the Moon is below every NASA dish right now.');
+      }
+      txt.innerHTML = html + ' <a href="https://eyes.nasa.gov/dsn/dsn.html" target="_blank" rel="noopener">NASA DSN Now</a>';
+      box.hidden = false;
+    }).catch(function () { box.hidden = true; });
+  }
   /* The real thing: which Moon spacecraft NASA's dishes are working right now (public DSN Now feed). Everything taken
      from the feed is escaped or coerced to a number before it reaches the page. */
   async function listenLive() {
@@ -728,10 +751,12 @@
       } else {
         out.className = 'ask-out ok';
         out.innerHTML = r.moon.map(function (x) {
+          var c = Radio.crossCheck(x, r.time || Date.now());
           return '<b>' + esc(x.craft) + '</b> · dish ' + esc(x.dish) + ', ' + esc(x.complex) + ' · ' +
             (x.down ? 'hearing it on ' + esc(x.down.band) + '-band at ' + (+x.down.dBm).toFixed(1) + ' dBm' + (x.down.bps > 0 ? ', ' + rate(+x.down.bps) : '')
                     : 'pointed at it, no downlink this moment') +
-            (x.rangeKm ? ' · ' + Math.round(+x.rangeKm).toLocaleString('en') + ' km away' : '');
+            (x.rangeKm ? ' · ' + Math.round(+x.rangeKm).toLocaleString('en') + ' km away' : '') +
+            (c ? ' · our math: Moon ' + Math.round(c.el) + '° up at ' + esc(c.station.name) + (c.agree ? ', agrees ✓' : ', disagrees') : '');
         }).join('<br>') + '<br>Live at ' + esc(when) + ', from ' + src + '.';
       }
     } catch (e) {

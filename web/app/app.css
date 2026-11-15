@@ -132,6 +132,18 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; font: in
 .chip.primary:hover { background: #fff; }
 .hero-foot { margin-top: 22px; color: var(--fg3); font-size: .8125rem; line-height: 1.5; }
 .hero-foot b { color: var(--fg2); font-weight: 500; }
+/* live: NASA's dishes and the Moon this minute (radio.js) */
+.live-moon { display: flex; align-items: baseline; gap: 9px; margin: 16px 0 0; padding: 9px 13px; max-width: 34em; border-radius: 12px;
+  background: rgba(10,14,20,.55); border: 1px solid rgba(94,177,255,.22); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: #d2d2d7; font-size: .84rem; line-height: 1.45; }
+.live-moon[hidden] { display: none; }
+.live-moon b { color: #f5f5f7; font-weight: 600; }
+.live-moon .ok { color: var(--good); font-weight: 600; } .live-moon .bad { color: var(--warn, #ffb340); font-weight: 600; }
+.live-moon a { color: var(--earth); }
+.live-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #ff453a; transform: translateY(-1px); animation: livePulse 2s ease-out infinite; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 rgba(255,69,58,.55); } 100% { box-shadow: 0 0 0 9px rgba(255,69,58,0); } }
+@media (prefers-reduced-motion: reduce) { .live-dot { animation: none; } }
+.hero-foot.trust { margin-top: 6px; } .hero-foot.trust a { color: var(--fg2); text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- site panel ---------- */
 #panel {

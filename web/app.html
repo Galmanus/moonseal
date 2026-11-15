@@ -34,7 +34,9 @@
   <p class="lede">There the Sun barely rises and Earth hides behind the mountains, so a lander that touches down on the wrong day loses power or contact. moonseal shows the good days to land, from NASA data, and seals what you find in public on Solana.</p>
   <div class="chips" id="heroChips"></div>
   <button class="why-link" id="heroWhy" type="button" aria-haspopup="dialog">Why this matters for humanity <span aria-hidden="true">›</span></button>
+  <div class="live-moon" id="liveMoon" hidden aria-live="polite"><span class="live-dot" aria-hidden="true"></span><span id="liveTxt"></span></div>
   <div class="hero-foot">Sunlight shown for <b id="heroWhen">…</b>, from JPL Horizons. Terrain: LRO LOLA. Color: LRO LROC.</div>
+  <div class="hero-foot trust">Signal to Earth, checked three ways: <a href="https://github.com/Galmanus/moonseal/blob/main/tests/radio.test.mjs" target="_blank" rel="noopener" title="The Moon's place in the sky of NASA's three dish complexes, within 0.26 degrees of JPL Horizons over 2026-2027">JPL Horizons</a> · <a href="https://github.com/Galmanus/moonseal/tree/main/tools/los-onchain" target="_blank" rel="noopener" title="A program on Solana devnet recomputes whether Earth is in view from a point and gives the planner's answer">recomputed on Solana</a> · <a href="https://eyes.nasa.gov/dsn/dsn.html" target="_blank" rel="noopener" title="When a NASA dish works a Moon spacecraft, our math must put the Moon in that dish's sky">NASA’s dishes, live</a>.</div>
 </section>
 
 <aside id="panel" class="glass" hidden aria-label="Landing site">

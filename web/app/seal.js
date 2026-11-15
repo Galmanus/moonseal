@@ -118,6 +118,21 @@ window.Seal = (function () {
       : '<b class="badc">BROKEN</b> · with the stay changed from ' + st.finding.stay_days + ' to ' + f.stay_days + ' days, the signature no longer matches. A sealed finding cannot be quietly edited.';
   }
 
+  /* The line of sight on Solana: the moonseal LOS program (tools/los-onchain) computes, inside one transaction, whether
+     Earth's centre clears the skyline, from the planner's own inputs. Devnet, the network that has the program. */
+  async function askEarth(q) {
+    var C = window.Command && Command.chain;
+    if (!C) throw new Error('the Solana client is not available');
+    await C.loadScript('app/moonseal-solana.js');
+    var cfg = window.MOONSEAL_ONCHAIN || { networks: [] }, net = cfg.networks.filter(function (n) { return n.losProgramId; })[0];
+    if (!net) throw new Error('no network with the line-of-sight program is configured');
+    var conn = new MoonsealSolana.Connection(net.rpc, 'confirmed');
+    var payer = await C.payerFor({ net: net, conn: conn });
+    var r = await MoonsealSolana.checkLineOfSight({ connection: conn, programId: net.losProgramId, payer: payer, query: q });
+    r.link = net.explorer ? '<a href="' + net.explorer.replace('{sig}', r.sig) + '" target="_blank" rel="noopener">transaction ↗</a>' : '';
+    return r;
+  }
+
   function build() {
     var host = document.createElement('div');
     host.id = 'seal'; host.setAttribute('role', 'dialog'); host.setAttribute('aria-modal', 'true'); host.setAttribute('aria-labelledby', 'sealTitle');
@@ -146,5 +161,5 @@ window.Seal = (function () {
   }
 
   build();
-  return { open: open, close: close, seal: seal, tamper: tamper, state: st };
+  return { open: open, close: close, seal: seal, tamper: tamper, askEarth: askEarth, state: st };
 })();

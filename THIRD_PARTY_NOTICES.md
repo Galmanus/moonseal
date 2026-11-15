@@ -12,6 +12,7 @@ moonseal's own code is released under the MIT license (see `LICENSE`). The files
 | `web/solana-bundle.js` | `solana/client/entry-browser.mjs` | same as above | same as above, including **LGPL-3.0-only** |
 | `web/app/wallet-bundle.js` | `tools/wallet-bundle` | @solana-mobile/wallet-standard-mobile 0.7.0, @wallet-standard/app 1.1.1, @noble/curves 2.4.0 | MIT, Apache-2.0, ISC, 0BSD |
 | `tools/mldsa-onchain` program (`.so`) | `tools/mldsa-onchain/Cargo.lock` | solana-program 2.2.1, sha3 0.10.9 | Apache-2.0; MIT OR Apache-2.0 |
+| `tools/los-onchain` program (`.so`) | `tools/los-onchain/Cargo.lock` | solana-program 2.2.1, libm 0.2.16 | Apache-2.0; MIT |
 | `solana/programs/lunar_contacts` | `solana/Cargo.lock` | anchor-lang 1.2.2 | Apache-2.0 |
 | `android/` Android app | `android/app/build.gradle.kts` | org.bouncycastle:bcprov-jdk18on 1.81 | Bouncy Castle licence (MIT terms) |
 

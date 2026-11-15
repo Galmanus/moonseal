@@ -254,3 +254,7 @@ A program that trusts a moonseal buffer must check: the buffer's owner is this p
 | First prototype, `lunar_contacts` (Anchor) | [`HuBV5gmKwQJvJuGvHLSY58hq2DE76khJYMrCzz6ipFYk`](https://explorer.solana.com/address/HuBV5gmKwQJvJuGvHLSY58hq2DE76khJYMrCzz6ipFYk?cluster=devnet) |
 
 On devnet, the program's upgrade authority and the demo registry's authority are the same single wallet.
+
+## Line of sight
+
+A second program, `GKs2P6bWKSnyCzrTsc7LcEp7MjUdCE4RaDYnynNiTWB5` on devnet, answers whether Earth is in view from a point on the Moon at a given hour, inside one transaction and with the site's own geometry. Its instruction layout, tests and two live answers are in [tools/los-onchain/README.md](../tools/los-onchain/README.md).

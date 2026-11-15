@@ -18,6 +18,7 @@ NASA Space Apps Challenge 2026 · Challenge #11, Lunar Landing Site Navigator ·
 - **Ranks the south-pole sites on power, water and radio.** Sunlight and Earth in view over every hour of 2026 and 2027, and where water ice can last (LRO Diviner: under the site, or the distance to the nearest cold trap), each counting the same. MoonDAO's Moon Base Zero comes first.
 - **Gives each site a field guide.** Conditions (sunlight, Earth in view, longest night, slope, surface gravity), geology, comparisons with places on Earth, and LRO images of the site, each with its source.
 - **Seals what you found.** Press **Seal this site on Solana**: moonseal signs the finding (the site, the good time to land, the stay, what the planner measured, the NASA data) with ML-DSA-65 in your browser, and the moonseal program on Solana verifies the signature on chain. The finding's bytes stay in the public transactions, and the seal id is sha256(key, signature, finding). Change one character and the seal no longer matches. The same program can also gate a base's commands with a list of authorized keys ([post-quantum.md](docs/post-quantum.md)).
+- **Asks Solana whether Earth is in view.** On a site, "Ask Solana" sends the point, the hour, the sub-Earth point and distance (JPL Horizons) and the point's skyline (LOLA) to a second program on devnet, which computes Earth's elevation inside the transaction and logs IN VIEW or HIDDEN ([tools/los-onchain](tools/los-onchain/README.md)). Over 70 test cases it agrees with the planner to 0.000001°.
 
 ## Try it
 

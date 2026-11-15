@@ -213,4 +213,52 @@ export async function verifyOnChain({ rpc, connection, programId, payer, pk, sig
   return out;
 }
 
+// ---- line of sight (tools/los-onchain): is Earth in view from a point on the Moon at a given hour? ----------------
+// One transaction: the program computes Earth's elevation from the sub-Earth point and distance (JPL Horizons), with
+// topocentric parallax, and compares it with the point's skyline (LRO LOLA). Layout: tools/los-onchain/src/lib.rs.
+export const LOS_HEADER = 31;
+export function losData({ lat, lon, elevM = 0, earthLat, earthLon, earthDistKm, hour, skyline }) {
+  const n = skyline.length;
+  const d = new Uint8Array(LOS_HEADER + 2 * n), v = new DataView(d.buffer);
+  const ude = x => Math.round(x * 1e6);
+  d[0] = 1;
+  v.setInt32(1, ude(lat), true); v.setInt32(5, ude(lon), true); v.setInt32(9, Math.round(elevM), true);
+  v.setInt32(13, ude(earthLat), true); v.setInt32(17, ude(earthLon), true); v.setUint32(21, Math.round(earthDistKm * 1000), true);
+  v.setUint32(25, hour >>> 0, true); v.setUint16(29, n, true);
+  for (let i = 0; i < n; i++) v.setInt16(LOS_HEADER + 2 * i, Math.max(-32767, Math.min(32767, Math.round(skyline[i] * 1000))), true);
+  return d;
+}
+export async function checkLineOfSight({ rpc, connection, programId, payer, query, backoffMs = 1500 }) {
+  const ctx = { conn: connection || new Connection(rpc, "confirmed"), backoffMs };
+  const tx = new Transaction();
+  tx.add(ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }));
+  tx.add(new TransactionInstruction({ programId: new PublicKey(programId), keys: [], data: toBuf(losData(query)) }));
+  tx.feePayer = payer.publicKey;
+  tx.recentBlockhash = await blockhash(ctx);
+  tx.sign(payer);
+  const raw = tx.serialize();
+  const sig = await retryRateLimited(ctx, () => ctx.conn.sendRawTransaction(raw, { skipPreflight: true }));
+  const t0 = Date.now();
+  let st;
+  for (;;) {
+    st = (await retryRateLimited(ctx, () => ctx.conn.getSignatureStatuses([sig]))).value[0];
+    if (st && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) break;
+    if (Date.now() - t0 > 60000) throw new Error("confirmation timeout " + sig);
+    await sleep(600);
+  }
+  if (st.err) throw new Error("the program rejected the query: " + JSON.stringify(st.err));
+  let t = null;
+  for (let k = 0; k < 8 && !(t && t.meta && t.meta.logMessages && t.meta.logMessages.length); k++) {
+    t = await retryRateLimited(ctx, () => ctx.conn.getTransaction(sig, { commitment: "confirmed", maxSupportedTransactionVersion: 0 }));
+    if (!(t && t.meta && t.meta.logMessages && t.meta.logMessages.length)) await sleep(500);
+  }
+  const logs = (t && t.meta && t.meta.logMessages) || [];
+  const line = (logs.find(l => l.includes("moonseal: Earth")) || "").replace("Program log: ", "");
+  const rd = t && t.meta && t.meta.returnData && t.meta.returnData.data && t.meta.returnData.data[0];
+  if (!rd) throw new Error("no answer in the transaction " + sig);
+  const b = Uint8Array.from(atob(rd), c => c.charCodeAt(0)), dv = new DataView(b.buffer);
+  const m = o => dv.getInt32(o, true) / 1000;
+  return { sig, bytes: raw.length, inView: b[0] === 1, el: m(1), az: m(5), sky: m(9), margin: m(13), line };
+}
+
 export { Keypair, Connection, PublicKey };

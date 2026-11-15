@@ -178,6 +178,7 @@
         '<div class="presets" id="presets" role="group" aria-label="How long the lander stays"><span class="pl">Stay</span><button data-d="7">1 week</button><button data-d="14">2 weeks</button><button data-d="60">2 months</button></div>' +
         '<div class="meter"><div class="row"><span>Sunlight during the stay (power)</span><b class="num" id="mSun"></b></div><div class="bar sun"><span id="bSun"></span></div></div>' +
         '<div class="meter"><div class="row"><span>Earth in view during the stay (radio)</span><b class="num" id="mEar"></b></div><div class="bar earth"><span id="bEar"></span></div></div>' +
+        '<div class="ask-sol"><button class="linkbtn" id="askEarth">Is Earth in view right now? Ask Solana ›</button><div class="ask-out" id="askOut"></div></div>' +
         '<button class="btn wide light" id="nextGood">Find the next good time to land</button>' +
         '<p class="hint">On the timeline below, <b>green</b> marks every good time to land. Press ▶ to watch the Sun and Earth move.</p>' +
         '<button class="btn wide pq seal-cta" id="cmdOpen"><span class="pq-dot"></span>Seal this site on Solana</button>' +
@@ -202,6 +203,7 @@
         '<div class="cap" style="margin-top:14px">' + src + '</div>' +
       '</details>';
     $('#closeSite').onclick = closeSite;
+    $('#askEarth').onclick = askEarth;
     var mapTxt = function () { return state.overlay ? 'Hide the sunlight and Earth map' : 'Show sunlight and Earth on the map'; };
     var mt = $('#mapToggle'); if (mt) { mt.textContent = mapTxt(); mt.onclick = function () { $('#mapBtn').click(); mt.textContent = mapTxt(); }; }
     var more = $('#panelBody .more'); if (more) more.addEventListener('toggle', function () { if (more.open) scheduleLive(); });   // the skyline draws at its real size
@@ -626,6 +628,26 @@
       data: 'NASA JPL Horizons (DE441) + LRO LOLA LDEM_75S_240M',
       found_utc: new Date().toISOString().slice(0, 19) + 'Z'
     };
+  }
+  /* Ask Solana whether Earth is in view from this spot at the selected hour: the moonseal LOS program computes it from
+     the planner's own inputs (the JPL Horizons sub-Earth point and distance, the LOLA skyline) and logs the answer. */
+  async function askEarth() {
+    var s = state.site, out = $('#askOut'), btn = $('#askEarth');
+    if (!s || !window.Seal || !out) return;
+    var h = Math.max(0, Math.min(N - 1, Math.floor(state.t))), sp = LunarEphem.subpoints(h), m = Model.compute(s);
+    btn.disabled = true; out.className = 'ask-out'; out.textContent = 'Asking Solana…';
+    try {
+      var r = await Seal.askEarth({ lat: s.lat, lon: s.lon, elevM: s.elev_m || 0, earthLat: sp.earthLat, earthLon: sp.earthLon,
+        earthDistKm: sp.earthDistKm, hour: h, skyline: m.hz && m.hz.length ? Array.from(m.hz) : [0] });
+      var same = (m.earUp[h] === 1) === r.inView;
+      out.className = 'ask-out ' + (r.inView ? 'ok' : 'bad');
+      out.innerHTML = '<b>Solana: Earth ' + (r.inView ? 'in view' : 'hidden') + '</b> on ' + esc(dateStr(h)) + ', ' + Math.abs(r.margin).toFixed(2) + '° ' +
+        (r.margin > 0 ? 'above' : 'below') + ' the skyline · ' + (same ? 'same answer as the planner' : 'the planner disagrees') + (r.link ? ' · ' + r.link : '');
+    } catch (e) {
+      out.className = 'ask-out bad';
+      out.textContent = /429|too many/i.test(e.message) ? 'Solana devnet is busy for this network right now; try again in half a minute.' : 'Could not reach Solana: ' + e.message;
+    }
+    btn.disabled = false;
   }
   function openSeal(s) { if (window.Seal) { Seal.open(sealFinding(s)); updateSteps(3); } }
   /* Three steps, one at a time: 1 choose a site (the ranked list), 2 when to land (the site's answer), 3 seal it. */

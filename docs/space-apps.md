@@ -38,6 +38,7 @@ A good landing site and day is a finding worth proving. moonseal seals it:
 
 - **Signed post-quantum:** the finding is signed with ML-DSA-65 (NIST FIPS 204) in the browser ([post-quantum.md](post-quantum.md)); change one character and the signature no longer matches.
 - **Verified in public on Solana:** the moonseal program checks the signature on chain and the finding's bytes stay in the public transactions ([onchain.md](onchain.md)). Live on devnet, Solana's test network: a sealed finding for Moon Base Zero, https://explorer.solana.com/tx/5UJiJvxASdziQg2SHoQTpEbPpyfZSNgNcXxkxDtDMH8kcN94M8j3gWVHxQH3s8qgQusgkPwJggZxhSZV17Keao2d?cluster=devnet.
+- **Earth in view, computed on Solana:** a second program takes a point, an hour, the sub-Earth point and the point's skyline and logs whether Earth's centre clears it ([los-onchain](../tools/los-onchain/README.md)); it agrees with the planner to 0.000001° over 70 test cases.
 - **A hybrid seal:** your Solana wallet vouches for the post-quantum key with an ed25519 attestation.
 
 ## A five-minute walkthrough

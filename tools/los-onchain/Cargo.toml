@@ -1,0 +1,22 @@
+[package]
+name = "los-onchain"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "moonseal: is Earth in view from a point on the Moon at a given hour? The line of sight computed inside a Solana program."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+solana-program = "=2.2.1"
+libm = "=0.2.16"   # pure-Rust sin/cos/atan2/sqrt/fmod (rust-lang/libm), deterministic in the SBF VM
+
+[dev-dependencies]
+# the same versions tools/mldsa-onchain tests with (already in its Cargo.lock)
+litesvm = "0.6"
+solana-sdk = "2"
+bincode = "1"

@@ -13,6 +13,7 @@ window.MOONSEAL_ONCHAIN = {
   networks: [
     { name: 'local validator', rpc: 'http://127.0.0.1:8899', programId: '3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7', airdrop: true },
     { name: 'Solana devnet', rpc: 'https://api.devnet.solana.com', programId: '3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7',
+      losProgramId: 'GKs2P6bWKSnyCzrTsc7LcEp7MjUdCE4RaDYnynNiTWB5',   // tools/los-onchain: is Earth in view from a point?
       explorer: 'https://explorer.solana.com/tx/{sig}?cluster=devnet' }
   ]
 };

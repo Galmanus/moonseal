@@ -35,7 +35,11 @@ window.WhyPole = (function () {
     a2026: ['NASA, “NASA Outlines Preliminary Artemis III Mission Plans” (13 May 2026)', 'https://www.nasa.gov/missions/artemis/artemis-3/nasa-outlines-preliminary-artemis-iii-mission-plans/',
       'Artemis III is now a crewed test flight in Earth orbit; crewed landing missions go to the south-pole region, the next landing with Artemis IV.']
   };
-  var ORDER = ['shadows', 'shackleton', 'phenomena', 'region', 'diviner', 'lcross', 'm3', 'water', 'a2022', 'a2024', 'a2026'];
+  SRC.athena = ['Astronomy, “Intuitive Machines’ IM-2 Moon lander is lying dead in a crater”', 'https://astronomy.com/space-exploration/intuitive-machines-im-2-moon-lander-is-lying-dead-in-a-crater',
+    'Athena lay on its side, partly in shadow, inside a crater; its surface mission, scheduled for 10 days, lasted less than 13 hours. Odysseus (2024) also ended early because its solar panels could not be oriented directly at the Sun.'];
+  SRC.athenasa = ['Scientific American, “Athena Lunar Lander Declared Dead on the Moon”', 'https://www.scientificamerican.com/article/athena-lunar-lander-declared-dead-on-the-moon/',
+    'Intuitive Machines: “With the direction of the sun, the orientation of the solar panels, and extreme cold temperatures in the crater, Intuitive Machines does not expect Athena to recharge.”'];
+  var ORDER = ['shadows', 'shackleton', 'phenomena', 'region', 'diviner', 'lcross', 'm3', 'water', 'a2022', 'a2024', 'a2026', 'athena', 'athenasa'];
   function cite(k) { return '<a class="why-cite" href="#why-src-' + k + '" data-cite="' + k + '" aria-label="Source ' + (ORDER.indexOf(k) + 1) + '">' + (ORDER.indexOf(k) + 1) + '</a>'; }
 
   /* sites in the comparison table: [id, short description] */
@@ -231,11 +235,22 @@ window.WhyPole = (function () {
     }).join('');
     host.innerHTML =
       '<div class="sheet glass glass-strong why-sheet" tabindex="-1">' +
-      '<div class="why-head"><div><div class="eyebrow">Field guide · the landing zone</div><h2 id="whyTitle">Why the south pole</h2></div>' +
+      '<div class="why-head"><div><div class="eyebrow">Why it matters</div><h2 id="whyTitle">Why this matters for humanity</h2></div>' +
       '<button class="icon-btn" id="whyClose" aria-label="Close">✕</button></div>' +
-      '<p class="why-lede">NASA’s next crewed landings and its planned Moon Base all aim at one small region: the area around the Moon’s south pole' + cite('a2026') + cite('region') + '. ' +
-      'It has ridges in near-constant sunlight, crater floors cold enough to keep ice for billions of years, and some of the oldest ground on the Moon. ' +
-      'The same geometry makes it unforgiving: a hill kilometers away decides whether a lander has power and can talk to Earth. That is what moonseal computes.</p>' +
+      '<p class="why-lede">People are going back to the Moon, this time to stay, and NASA’s next crewed landings and its planned Moon Base all aim at one small region: the area around the Moon’s south pole' + cite('a2026') + cite('region') + '. ' +
+      'The reason is water. Craters there that never see the Sun are cold enough to keep ice for billions of years' + cite('diviner') + ', and in 2009 NASA found water in one of them' + cite('lcross') + '. ' +
+      'On the Moon, water is life support and fuel' + cite('water') + ': water to drink and, split into oxygen and hydrogen, air to breathe and rocket propellant. It is the difference between visiting the Moon and living there.</p>' +
+      '<div class="why-stakes">' +
+        '<div><b class="sunc">1.5°</b><span>the highest the Sun ever climbs above the horizon there' + cite('shadows') + '</span></div>' +
+        '<div><b class="ice-c">−203 °C</b><span>the floors of the craters the Sun never reaches, where the ice is' + cite('region') + '</span></div>' +
+        '<div><b class="badc">&lt; 13 h</b><span>how long the lander Athena lasted in 2025, on a 10-day mission' + cite('athena') + '</span></div>' +
+      '</div>' +
+      '<h3 class="why-h">Why it is so hard to plan</h3>' +
+      '<p class="why-p">With the Sun that low, shadows stretch 25 to 50 times longer than what casts them' + cite('phenomena') + ', and a hill kilometers away decides whether a lander has power. ' +
+      'Earth, the only way to talk to home, sits low in the sky too and hides behind the same hills. Light decides how long a lander lives: in 2024 Odysseus ended early because its solar panels could not face the Sun, ' +
+      'and in 2025 Athena, on its side in a cold crater, could not recharge' + cite('athena') + cite('athenasa') + '.</p>' +
+      '<p class="why-p"><b>That is what moonseal is for.</b> For any spot and any hour of 2026 and 2027 it computes when a lander there has both sunlight and Earth in view, from NASA data; it ranks the sites on power, water and radio; and it seals what you find in public on Solana.</p>' +
+      '<h3 class="why-h">How the light works there</h3>' +
       '<figure class="why-fig">' + diagram() +
       '<figcaption>A 32 km slice through a ridge and a deep polar crater, drawn at the same scale up and across: no vertical exaggeration, so the light really arrives this flat. The Sun circles the horizon once every lunar day; from any side, the crater floor stays dark. Terrain is illustrative; the Sun’s 1.5° is not.</figcaption></figure>' +
       '<ol class="why-key">' +

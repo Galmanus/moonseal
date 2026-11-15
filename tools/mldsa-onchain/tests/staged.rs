@@ -1,5 +1,5 @@
 //! The staged protocol end to end in LiteSVM (the real SBF VM): every transaction under 1.4M CU and
-//! 1232 bytes, a browser signature and a Seeker-library signature VERIFIED on chain, tampering
+//! 1232 bytes, a browser signature and a BouncyCastle signature VERIFIED on chain, tampering
 //! REJECTED, and the protocol's guards (authority, sealing, stage order) enforced.
 use litesvm::LiteSVM;
 use mldsa_onchain::*;
@@ -69,9 +69,9 @@ fn verify_staged(pk: &[u8], sig: &[u8], m: &[u8]) -> (u8, Run) {
 fn f(n: &str) -> Vec<u8> { std::fs::read(format!("tests/fixtures/{n}")).unwrap() }
 
 #[test]
-fn browser_and_seeker_signatures_verify_on_chain() {
+fn browser_and_bouncycastle_signatures_verify_on_chain() {
     let m = f("msg.bin");
-    for (who, pk, sig) in [("browser (@noble/post-quantum)", f("noble_pk.bin"), f("noble_sig.bin")), ("Seeker library (BouncyCastle 1.81)", f("bc_pk.bin"), f("bc_sig.bin"))] {
+    for (who, pk, sig) in [("browser (@noble/post-quantum)", f("noble_pk.bin"), f("noble_sig.bin")), ("BouncyCastle 1.81 (Java)", f("bc_pk.bin"), f("bc_sig.bin"))] {
         let (res, run) = verify_staged(&pk, &sig, &m);
         println!("{who}: result={} txs={} max_cu={} max_tx_bytes={}", res, run.txs, run.max_cu, run.max_bytes);
         for (l, cu) in run.per_stage.iter().filter(|(l, _)| l != "WRITE") { println!("    {l:10} {cu:>9} CU"); }

@@ -8,7 +8,7 @@ import java.security.*;
  * De-risk spike for NASA Space Apps #11 crypto layer.
  *
  * Proves, at the ALGORITHM level on a plain JVM, the command-authentication
- * core before any Android packaging on the Seeker:
+ * core before any Android packaging:
  *   - generate an ML-DSA (FIPS 204) keypair
  *   - sign a lunar-asset command
  *   - ACCEPT a genuine command
@@ -16,7 +16,7 @@ import java.security.*;
  *   - REJECT a replayed command (monotonic counter)
  *
  * If this runs here, only on-device packaging (bcprov jar on Android runtime)
- * remains as a risk for the Seeker build. That split is the whole point.
+ * remains as a risk for the Android build. That split is the whole point.
  */
 public class MLDSACommandSpike {
 
@@ -41,7 +41,7 @@ public class MLDSACommandSpike {
         System.out.println("pubkey bytes : " + kp.getPublic().getEncoded().length);
         System.out.println("privkey bytes: " + kp.getPrivate().getEncoded().length);
 
-        // 2. a genuine command from the Seeker to a lunar asset
+        // 2. a genuine command from the operator's phone to a lunar asset
         long counter = 42;
         long issuedAt = 1762000000L;
         byte[] msg = canonical("LUNAR-ROVER-01", "DEPLOY_PANEL", counter,

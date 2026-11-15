@@ -35,12 +35,12 @@ moonseal is a hackathon prototype. This page states what it defends against, whi
 - **The planned hour is recorded, not enforced, on chain.** `AUTHORIZE` stores the ticket's hour; the line-of-sight check happens at the lander.
 - **One counter per base.** All operators of a base share one counter. Two tickets racing for the same counter value cannot both be authorized. The web page uses the current time in milliseconds as the counter, so a visitor whose clock runs ahead can make later tickets from other visitors look like replays.
 - **Implementation maturity.** The verifier is new code. It agrees with two independent ML-DSA-65 implementations (@noble/post-quantum and BouncyCastle) on the test vectors, which is evidence, not proof. Constant-time behavior is not required, because every input to verification is public.
-- **Keys at rest.** In the browser, keys live in page memory. In the Seeker app, the ML-DSA key is stored in the app's files, not yet wrapped by the Android Keystore.
+- **Keys at rest.** In the browser, keys live in page memory. In the Android app, the ML-DSA key is stored in the app's files, not yet wrapped by the Android Keystore.
 - **The first prototype is not gated.** `solana/programs/lunar_contacts` records contact windows and command hashes but verifies no signatures.
 
 ## Secrets in this repository
 
-None. The devnet demo payer key (`web/solana-demo-config.js`), the program and registry keypairs, and the Seeker spike's private key are excluded from version control. `web/solana-demo-config.example.js` shows the expected format. The demo operator seed in `web/app/onchain-config.js` is public by design.
+None. The devnet demo payer key (`web/solana-demo-config.js`), the program and registry keypairs, and the Java spike's private key are excluded from version control. `web/solana-demo-config.example.js` shows the expected format. The demo operator seed in `web/app/onchain-config.js` is public by design.
 
 ## Reporting a problem
 

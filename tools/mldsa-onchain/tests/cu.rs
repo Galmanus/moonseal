@@ -51,7 +51,7 @@ fn mldsa65_verify_cost() {
     println!("uncapped measure: success={ok2} CU={cu2}");
     for l in logs2.iter().filter(|l| l.contains("consumption") || l.contains("verify") || l.contains("phase") || l.contains("failed") || l.contains("Access")) { println!("  {l}"); }
     let (bok, bcu, _) = run(&std::fs::read("tests/fixtures/bc_pk.bin").unwrap(), &std::fs::read("tests/fixtures/bc_sig.bin").unwrap(), &m, true);
-    println!("BouncyCastle (Seeker) signature: success={bok} CU={bcu}");
+    println!("BouncyCastle (Java) signature: success={bok} CU={bcu}");
     assert!(bok, "BouncyCastle signature must verify on-chain");
     let mut bad = m.clone(); bad[3] ^= 1;
     let (ok3, cu3, _) = run(&pk, &sig, &bad, true);

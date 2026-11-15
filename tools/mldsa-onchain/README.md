@@ -28,7 +28,7 @@ signed version cost ~400k CU per NTT (13.5M CU total) vs 3.4M CU unsigned.
 
 ## Tests
 - `cargo test --release --test native`: verifies signatures from @noble/post-quantum 0.7.1 (browser) and
-  BouncyCastle 1.81 (Seeker app); rejects tampered message / 7 signature positions / key / context.
+  BouncyCastle 1.81 (Java, the Android app); rejects tampered message / 7 signature positions / key / context.
 - `cargo build-sbf && cargo test --release --test staged`: the full protocol in the SBF VM, both
   signatures VERIFIED, tampering REJECTED, guards (authority, seal, stage order, no repeats, no re-init).
 - `../../solana/client/e2e-moonseal.mjs`: the browser client against a real validator.

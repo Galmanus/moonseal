@@ -179,7 +179,7 @@
       <span class="tg oow" id="tg-oow">force out of window</span>
     </div>
 
-    <button class="send" id="send">sign on the Seeker and send</button>
+    <button class="send" id="send">sign and send</button>
 
     <div class="gates" id="gates" style="display:none">
       <div class="gate" id="g1"><span class="lamp"></span><span>gate 1 · ML-DSA signature (post-quantum)</span><span class="sub" id="g1s"></span></div>
@@ -192,7 +192,7 @@
 
   <div class="card adv">
     <h2>why post-quantum</h2>
-    <div>the map doesn't need crypto. the <b>command</b> does. a forged or replayed command to a lunar asset is catastrophic, and the link lives for decades: the adversary records today and breaks it with a quantum computer later. every command carries an <b>ML-DSA (FIPS 204)</b> signature, verified on the device. device identity is rooted in the Seed Vault (ed25519); the post-quantum key lives in the keystore.</div>
+    <div>the map doesn't need crypto. the <b>command</b> does. a forged or replayed command to a lunar asset is catastrophic, and the link lives for decades: the adversary records today and breaks it with a quantum computer later. every command carries an <b>ML-DSA (FIPS 204)</b> signature, verified on the device. the post-quantum signing key never leaves the phone.</div>
     <div class="foot">measured in the spike: ML-DSA-65, signature 3309 B, sign ~29 ms, verify ~5 ms.</div>
   </div>
 </div>
@@ -212,7 +212,7 @@ el('mode').textContent = BRIDGE ? 'on-device (native bridge)' : 'preview browser
 el('mode').className = 'mode ' + (BRIDGE ? 'device' : 'dev');
 el('bridgenote').innerHTML = BRIDGE
   ? 'real ML-DSA signing and verification via the native bridge (bouncycastle/keystore).'
-  : 'preview without a device: gate 1 below is a <b>labeled stand-in</b>. in the app (WebView on the Seeker) it runs real ML-DSA. it is not fake crypto dressed up as real.';
+  : 'preview without a device: gate 1 below is a <b>labeled stand-in</b>. in the Android app (WebView) it runs real ML-DSA. it is not fake crypto dressed up as real.';
 
 el('src').textContent = D.source;
 

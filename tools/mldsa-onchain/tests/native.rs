@@ -9,7 +9,7 @@ fn sizes_match_fips204() { assert_eq!((PK_LEN, SIG_LEN), (1952, 3309)); }
 fn verifies_noble_and_bouncycastle_signatures() {
     let m = f("msg.bin");
     assert!(verify(&f("noble_pk.bin"), &m, &f("noble_sig.bin"), &[]), "browser (@noble/post-quantum) signature");
-    assert!(verify(&f("bc_pk.bin"), &m, &f("bc_sig.bin"), &[]), "Seeker library (BouncyCastle 1.81) signature");
+    assert!(verify(&f("bc_pk.bin"), &m, &f("bc_sig.bin"), &[]), "BouncyCastle 1.81 (Java) signature");
 }
 
 #[test]

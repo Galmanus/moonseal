@@ -15,7 +15,7 @@ Build a tool that helps compare lunar south-pole landing sites and dates by illu
 
 Mission planners choosing a lunar south-pole landing site must know, per site and per date, when the Sun is up (power) and when Earth is above the horizon (direct-to-Earth contact). moonseal answers that in the browser, from real NASA data: a live Moon lit by the real Sun for any date, the south pole's LOLA terrain with ray-marched shadows, a skyline view from any site with the Sun and Earth on it, a two-year availability timeline, time to sunset and Earthset, and a plain-language verdict for a mission of N days. You can pick a curated site (NASA crewed-landing candidate regions, IM-1, IM-2, Chandrayaan-3, Apollo, MoonDAO's Moon Base Zero) or tap anywhere on the Moon.
 
-It then follows the decision through to the first command. A command can only reach the lander inside a window the planner computes. moonseal signs it with ML-DSA-65 and encrypts it with ML-KEM-768, in the browser or on a Solana Seeker phone. A Solana program verifies the signature on chain and checks the base's registry before an open network of ground stations may relay it.
+It then follows the decision through to the first command. A command can only reach the lander inside a window the planner computes. moonseal signs it with ML-DSA-65 and encrypts it with ML-KEM-768, in the browser or natively in an Android app. A Solana program verifies the signature on chain and checks the base's registry before an open network of ground stations may relay it.
 
 ## How moonseal meets the challenge
 
@@ -36,7 +36,7 @@ The planner's output is a contact window. moonseal uses that window as the gate 
 
 - **Unforgeable and private for the mission's life:** ML-DSA-65 and ML-KEM-768 ([post-quantum.md](post-quantum.md)).
 - **A policy no single operator holds:** a Solana program verifies the signature and applies the base's registry of authorized keys and replay counter ([onchain.md](onchain.md)). It is live on devnet, with receipts for an authorized command and for refused forged and replayed ones.
-- **Hardware identity on a phone:** on a Solana Seeker, the Seed Vault vouches for the post-quantum key with an ed25519 attestation.
+- **A hybrid seal:** your Solana wallet vouches for the post-quantum key with an ed25519 attestation.
 
 ## A five-minute walkthrough
 

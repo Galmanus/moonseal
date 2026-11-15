@@ -1,7 +1,7 @@
 {
   "name": "moonseal-wallet-bundle",
   "private": true,
-  "description": "Solana wallet connection for web/app: Mobile Wallet Adapter (Solana Seeker Seed Vault) + Wallet Standard (desktop wallets). Pinned to versions >= 5 weeks old; bundled locally, no CDN.",
+  "description": "Solana wallet connection for web/app: Mobile Wallet Adapter (Android wallets) + Wallet Standard (desktop wallets). Pinned to versions >= 5 weeks old; bundled locally, no CDN.",
   "dependencies": {
     "@solana-mobile/wallet-standard-mobile": "0.7.0",
     "@wallet-standard/app": "1.1.1",

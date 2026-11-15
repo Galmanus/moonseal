@@ -220,7 +220,7 @@ The public devnet endpoint rate-limits per IP and per method with HTTP 429. The 
 |---|---|
 | `registry.mjs` | `create`, `add-demo-operator`, `add`, `remove`, `show` for a base's registry |
 | `devnet-moonseal.mjs` | Verify the fixture signature on a cluster and print every transaction |
-| `e2e-moonseal.mjs` | Browser, Seeker-library and tampered signatures against a validator |
+| `e2e-moonseal.mjs` | Browser, BouncyCastle and tampered signatures against a validator |
 | `e2e-gate.mjs` | Honest, replay, forged key, other base and tampered tickets through `AUTHORIZE` |
 | `test-ratelimit.mjs` | Rate-limit and cleanup regression test |
 | `close-buffer.mjs` | Close a buffer left open by an interrupted run |

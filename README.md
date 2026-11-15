@@ -12,7 +12,7 @@ NASA Space Apps Challenge 2026 · Challenge #11, Lunar Landing Site Navigator ·
 
 - **Finds when a south-pole site has power and a line to Earth.** For any curated site, any point you tap on the Moon, and any hour of 2026 and 2027, moonseal computes when the Sun and Earth stand above the real terrain horizon. It works from JPL Horizons ephemerides and LOLA topography, entirely in your browser.
 - **Gives each site a field guide.** Conditions (sunlight, Earth in view, longest night, slope, surface gravity), geology, comparisons with places on Earth, and LRO images of the site, each with its source.
-- **Seals the command to the lander.** Commands are signed with ML-DSA-65 (FIPS 204) and encrypted with ML-KEM-768 (FIPS 203), in the browser or on a Solana Seeker phone. The lander executes a command only inside a contact window the planner computed.
+- **Seals the command to the lander.** Commands are signed with ML-DSA-65 (FIPS 204) and encrypted with ML-KEM-768 (FIPS 203), in the browser or natively in an Android app. The lander executes a command only inside a contact window the planner computed.
 - **Lets the base decide, on chain, who may command it.** A Solana program verifies the ML-DSA-65 signature, then checks the base's registry of authorized keys and a replay counter. A valid signature from an unregistered key is refused on chain, and the refusal is a public receipt.
 
 ## Try it
@@ -23,7 +23,7 @@ python3 -m http.server 8787
 # then open http://127.0.0.1:8787/app.html
 ```
 
-No account, wallet or build step is needed: the site is static files in `web/`. To run the on-chain part against a local validator or Solana devnet, or on a Seeker phone, follow [docs/quickstart.md](docs/quickstart.md).
+No account, wallet or build step is needed: the site is static files in `web/`. To run the on-chain part against a local validator or Solana devnet, or with a wallet on a phone, follow [docs/quickstart.md](docs/quickstart.md).
 
 ## How it works
 
@@ -89,7 +89,7 @@ An ML-DSA-65 public key (1,952 B) and signature (3,309 B) do not fit a 1,232-byt
 | ROWS 2-3 | 982,964 |
 | ROWS 4-5 + FINAL | 1,076,302 |
 
-A full run is 11 transactions (12 with `AUTHORIZE`), each at most 1,155 bytes. `AUTHORIZE` costs 690 to 4,841 compute units. Signatures from the browser (@noble/post-quantum 0.7.1) and from the Seeker app's library (BouncyCastle 1.81) verify; tampered ones are rejected. Source: `tools/mldsa-onchain/README.md`, `tools/mldsa-onchain/tests/`.
+A full run is 11 transactions (12 with `AUTHORIZE`), each at most 1,155 bytes. `AUTHORIZE` costs 690 to 4,841 compute units. Signatures from the browser (@noble/post-quantum 0.7.1) and from BouncyCastle 1.81 (Java, used by the Android app) verify; tampered ones are rejected. Source: `tools/mldsa-onchain/README.md`, `tools/mldsa-onchain/tests/`.
 
 ## Live on Solana devnet
 
@@ -135,8 +135,8 @@ tools/pq-bundle/         pinned @noble/post-quantum build for the browser
 tools/wallet-bundle/     pinned Solana wallet connection (Mobile Wallet Adapter, Wallet Standard)
 solana/client/           JavaScript client: staged runs, registry tool, end-to-end and rate-limit tests
 solana/programs/         first prototype: Anchor program for ground-station contact windows
-android/                 Solana Seeker app (ML-DSA-65 signing with BouncyCastle 1.81)
-seeker-spike/            Java spike of the signed command format
+android/                 Android app (ML-DSA-65 signing with BouncyCastle 1.81)
+java-spike/              Java spike of the signed command format
 docs/                    documentation
 ```
 
@@ -144,10 +144,10 @@ docs/                    documentation
 
 | Page | What it covers |
 |---|---|
-| [Quickstart](docs/quickstart.md) | Run the site, the local validator, devnet, the Seeker phone, and the tests |
+| [Quickstart](docs/quickstart.md) | Run the site, the local validator, devnet, a wallet on a phone, and the tests |
 | [Architecture](docs/architecture.md) | Components, data flow and a file map |
 | [Planner methods and validation](docs/planner.md) | Ephemeris, terrain horizon, metrics, checks, uncertainty |
-| [Post-quantum command path](docs/post-quantum.md) | ML-DSA-65, ML-KEM-768, the lander's gates, the hybrid seal with the Seed Vault |
+| [Post-quantum command path](docs/post-quantum.md) | ML-DSA-65, ML-KEM-768, the lander's gates, the hybrid seal with your Solana wallet |
 | [On-chain reference](docs/onchain.md) | Accounts, instructions, ticket format, errors, costs, client API |
 | [Security model](docs/security.md) | Threats, mitigations, the test for each, trust assumptions |
 | [Data sources](docs/data-sources.md) | Every NASA dataset, how it is used, how to regenerate |
@@ -167,7 +167,7 @@ docs/                    documentation
 - **NASA data:** JPL Horizons (DE441); LRO LOLA LDEM_75S_240M and ldem_16; LRO LROC WAC color mosaic via NASA SVS CGI Moon Kit #4720; NASA PGDA LOLA 5 m/px south-pole site DEMs (Barker et al. 2021); NASA Blue Marble (SVS #2915). This project uses NASA data and is not endorsed by NASA.
 - **LRO images in the field guide:** Lunar Reconnaissance Orbiter Narrow Angle Camera frames, credit NASA/GSFC/Arizona State University (LROC terms: educational use with credit).
 - **MoonDAO:** Moon Base Zero's coordinates come from MoonDAO's open-source repository (commit `0a9d527`). moonseal is not affiliated with or endorsed by MoonDAO.
-- **Solana:** Solana, the Solana Seeker and the Seed Vault are products of their respective owners. moonseal is not affiliated with or endorsed by them.
+- **Solana:** Solana is a product of its respective owners. moonseal is not affiliated with or endorsed by them.
 - **Use of AI:** an AI coding assistant (Claude) helped write and verify the code. All data is real NASA data, and no imagery is AI-generated.
 
 ## License

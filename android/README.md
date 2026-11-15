@@ -1,12 +1,12 @@
-# moonseal: Android app for the Solana Seeker
+# moonseal: Android app
 
 A WebView shell around the mission console (`web/index.html`) plus a native post-quantum signing bridge,
-`LunarBridge.kt`: ML-DSA-65 through BouncyCastle 1.81 (`bcprov-jdk18on:1.81`), mirroring `seeker-spike/`.
+`LunarBridge.kt`: ML-DSA-65 through BouncyCastle 1.81 (`bcprov-jdk18on:1.81`), mirroring `java-spike/`.
 
 ## Status
 - The project was written without an Android SDK in the development sandbox. What was verified on a
   device is the cryptography: ML-DSA-65 through BouncyCastle runs on the phone's runtime (proved with the
-  `seeker-spike/` bundle under Termux). Build the app in Android Studio before relying on it.
+  `java-spike/` bundle under Termux). Build the app in Android Studio before relying on it.
 - `app/src/main/assets/` holds copies of the older console and its data. Re-copy them from `web/` before a
   release (see below); the current site is `web/app.html`.
 - The bridge signs text payloads (`signMLDSA(String)`). On-chain uplink tickets are binary, so today the web
@@ -18,7 +18,7 @@ A WebView shell around the mission console (`web/index.html`) plus a native post
 ## Build
 1. Open `android/` in Android Studio (it resolves the Gradle wrapper and the SDK),
    or with a local Gradle: `cd android && gradle :app:assembleDebug`.
-2. A debug build runs on the emulator or a Seeker. The Solana dApp Store requires a signed release build.
+2. A debug build runs on the emulator or an Android phone. A store release needs a signed release build.
 
 ## How the bridge connects to the console
 `MainActivity` injects `LunarBridge` as `window.LunarBridge`. The console detects it:

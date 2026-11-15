@@ -5,7 +5,7 @@ const [rpc, programId, payerPath, fx] = process.argv.slice(2);
 const payer = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(payerPath, "utf8"))));
 const rd = n => new Uint8Array(readFileSync(`${fx}/${n}`));
 for (const [who, pk, sig, msg] of [["browser", rd("noble_pk.bin"), rd("noble_sig.bin"), rd("msg.bin")],
-                                     ["seeker-lib", rd("bc_pk.bin"), rd("bc_sig.bin"), rd("msg.bin")],
+                                     ["bouncycastle", rd("bc_pk.bin"), rd("bc_sig.bin"), rd("msg.bin")],
                                      ["tampered", rd("noble_pk.bin"), rd("noble_sig.bin"), (() => { const m = rd("msg.bin"); m[3] ^= 1; return m; })()]]) {
   const t0 = Date.now();
   const r = await verifyOnChain({ rpc, programId, payer, pk, sig, msg });

@@ -13,7 +13,7 @@ moonseal's own code is released under the MIT license (see `LICENSE`). The files
 | `web/app/wallet-bundle.js` | `tools/wallet-bundle` | @solana-mobile/wallet-standard-mobile 0.7.0, @wallet-standard/app 1.1.1, @noble/curves 2.4.0 | MIT, Apache-2.0, ISC, 0BSD |
 | `tools/mldsa-onchain` program (`.so`) | `tools/mldsa-onchain/Cargo.lock` | solana-program 2.2.1, sha3 0.10.9 | Apache-2.0; MIT OR Apache-2.0 |
 | `solana/programs/lunar_contacts` | `solana/Cargo.lock` | anchor-lang 1.2.2 | Apache-2.0 |
-| `android/` Seeker app | `android/app/build.gradle.kts` | org.bouncycastle:bcprov-jdk18on 1.81 | Bouncy Castle licence (MIT terms) |
+| `android/` Android app | `android/app/build.gradle.kts` | org.bouncycastle:bcprov-jdk18on 1.81 | Bouncy Castle licence (MIT terms) |
 
 ## LGPL-3.0 component: rpc-websockets
 
@@ -29,7 +29,7 @@ To comply with the LGPL, the library's source is available from its upstream pro
 
 ## Java
 
-The Seeker app and `seeker-spike/` use Bouncy Castle 1.81 (`bcprov-jdk18on`). Copyright (c) 2000-2023 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org). Its licence, shipped inside the jar as `org/bouncycastle/LICENSE`, grants the MIT permissions: "Permission is hereby granted, free of charge, to any person obtaining a copy of this software ...".
+The Android app and `java-spike/` use Bouncy Castle 1.81 (`bcprov-jdk18on`). Copyright (c) 2000-2023 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org). Its licence, shipped inside the jar as `org/bouncycastle/LICENSE`, grants the MIT permissions: "Permission is hereby granted, free of charge, to any person obtaining a copy of this software ...".
 
 ## Data and imagery
 

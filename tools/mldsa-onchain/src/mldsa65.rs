@@ -11,7 +11,7 @@
 //! in LiteSVM: the signed version spent ~400k CU per NTT; this one avoids every signed division.
 //!
 //! Verification only (public data in, bool out). Interop is pinned by tests against signatures from
-//! @noble/post-quantum 0.7.1 (the browser) and BouncyCastle 1.81 (the Seeker app).
+//! @noble/post-quantum 0.7.1 (the browser) and BouncyCastle 1.81 (the Android app).
 
 extern crate alloc;
 use alloc::{boxed::Box, vec, vec::Vec};

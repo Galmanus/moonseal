@@ -1,11 +1,11 @@
 /* Command the lander: post-quantum, end to end, gated by the planner's line of sight.
  *
- *   operator (Solana Seeker)  --ML-DSA-65 sign-->  encrypt to the lander (ML-KEM-768 + AES-256-GCM)
+ *   operator  --ML-DSA-65 sign-->  encrypt to the lander (ML-KEM-768 + AES-256-GCM)
  *     --> untrusted ground station on Solana (sees ciphertext only; anchors a hash)
  *     --> lander: decrypt -> verify signature -> fresh counter -> Earth above the skyline (planner)
  *
  * Real crypto in the browser: @noble/post-quantum 0.7.1 (vendored, app/pq-bundle.js). Interop was checked
- * against BouncyCastle 1.81 (the Seeker app's library) in both directions. Inside the Seeker app
+ * against BouncyCastle 1.81 (the Android app's library) in both directions. Inside the Android app
  * (window.LunarBridge) the operator signature is made natively on the phone instead. */
 window.Command = (function () {
   'use strict';
@@ -36,7 +36,7 @@ window.Command = (function () {
   function sleep(t) { return new Promise(function (r) { setTimeout(r, Spring.reduced() ? 0 : t); }); }
 
   // Demo operator key: derived from a PUBLIC seed (onchain-config.js) so every visitor can command the demo
-  // base; its sha256 sits in the base's registry on Solana. A real operator key lives on the Seeker, never public.
+  // base; its sha256 sits in the base's registry on Solana. A real operator key stays with the operator, never public.
   function demoSeed() {
     var h = (window.MOONSEAL_ONCHAIN || {}).demoOperatorSeedHex;
     return h ? Uint8Array.from(h.match(/../g).map(function (x) { return parseInt(x, 16); })) : undefined;
@@ -104,8 +104,8 @@ window.Command = (function () {
       else if (st.op.native) sig = b64d(await BRIDGE.signMLDSA(td.decode(payload)));
       else sig = D.sign(payload, st.op.secretKey);
       signMs = ms(t0);
-      stage('s1', mode === 'forged' ? 'Attacker signs' : (st.op.native ? 'Signed on this Seeker (native)' : 'Signed with the operator key (this browser)'),
-        mode === 'forged' ? 'The attacker knows the lander’s public key and the format, but not the Seeker’s private key, so it signs with its own.'
+      stage('s1', mode === 'forged' ? 'Attacker signs' : (st.op.native ? 'Signed on this phone (native)' : 'Signed with the operator key (this browser)'),
+        mode === 'forged' ? 'The attacker knows the lander’s public key and the format, but not the operator’s private key, so it signs with its own.'
                           : 'ML-DSA-65 (FIPS 204) over the command, the counter and the planned hour.',
         [['signature', fmtB(sig.length)], ['sign time', signMs], ['counter', String(counter)]]);
       await sleep(380);
@@ -131,7 +131,7 @@ window.Command = (function () {
       st.ticket = st.lastAuthorized;                        // the captured ticket + signature, byte for byte
     } else {
       var ticket = uplinkTicket(Date.now(), Math.round(t), hpk, site.id);
-      // (the Seeker build's bridge signs text only, so tickets are signed with the demo operator key there too)
+      // (the Android app's bridge signs text only, so tickets are signed with the demo operator key there too)
       var tkey = forgedTicket ? st.attacker : st.demoOp;
       st.ticket = { msg: ticket, sig: D.sign(ticket, tkey.secretKey), pk: tkey.publicKey, forged: forgedTicket };
     }
@@ -173,7 +173,7 @@ window.Command = (function () {
     if (ok && st.attest) {                    // hybrid seal: the key that must have signed was attested by the wallet
       var attested = st.attest.ok && st.attest.keyHash === await sha256hex(st.op.publicKey);
       gates.push(['Key attested by the operator’s wallet (ed25519)', attested, attested
-        ? (st.attest.seedVault ? 'Seed Vault on the Solana Seeker' : st.attest.wallet) + ' vouched for this ML-DSA-65 key'
+        ? st.attest.wallet + ' vouched for this ML-DSA-65 key'
         : 'No valid wallet attestation for this key']);
       ok = attested;
     }
@@ -194,18 +194,18 @@ window.Command = (function () {
     st.busy = false;
   }
 
-  /* ---------------------------------------------------------------- hybrid seal: wallet (Seed Vault) attests the PQ key */
+  /* ---------------------------------------------------------------- hybrid seal: the Solana wallet attests the PQ key */
   function walletLine(html, bad) { var el = $('#walletLine'); el.innerHTML = html; el.classList.toggle('bad', !!bad); }
   async function sha256hex(b) { return hex(new Uint8Array(await crypto.subtle.digest('SHA-256', b))); }
   async function connectWallet() {
     var btn = $('#walletBtn'); btn.disabled = true;
     walletLine('Loading the wallet connector…');
     await loadScript('app/wallet-bundle.js', 'MoonsealWallet');
-    MoonsealWallet.setup();                                // registers Mobile Wallet Adapter on Android (Seeker)
+    MoonsealWallet.setup();                                // registers Mobile Wallet Adapter on Android
     var ws = MoonsealWallet.getWallets().get().filter(function (w) { return w.features['standard:connect'] && w.features['solana:signMessage']; });
     var w = ws.find(function (x) { return /Mobile Wallet Adapter/.test(x.name); }) || ws[0];
     if (!w) {
-      walletLine('No Solana wallet found in this browser. On a Solana Seeker, open this page in its browser: Mobile Wallet Adapter reaches the Seed Vault. On a laptop: Phantom or Solflare.');
+      walletLine('No Solana wallet found in this browser. On a laptop: Phantom or Solflare. On Android: open this page in the phone’s browser with a Solana wallet app installed (Mobile Wallet Adapter).');
       btn.disabled = false; return;
     }
     keys();
@@ -219,15 +219,15 @@ window.Command = (function () {
     var res = Array.isArray(out) ? out[0] : out;
     var signed = res.signedMessage || te.encode(text);
     var ok = MoonsealWallet.ed25519.verify(res.signature, signed, acct.publicKey) && td.decode(signed).indexOf(keyHash) >= 0;
-    st.attest = { wallet: w.name, address: acct.address, ok: ok, keyHash: keyHash, seedVault: /Mobile Wallet Adapter/.test(w.name) };
+    st.attest = { wallet: w.name, address: acct.address, ok: ok, keyHash: keyHash };
     walletLine((ok ? '<b class="okc">Hybrid seal ready</b>: ' : '<b class="badc">Attestation did not verify</b>: ') +
-      (st.attest.seedVault ? 'Seed Vault (Mobile Wallet Adapter)' : w.name) + ' account ' + acct.address.slice(0, 4) + '…' + acct.address.slice(-4) +
+      w.name + ' account ' + acct.address.slice(0, 4) + '…' + acct.address.slice(-4) +
       ' signed (ed25519) that ML-DSA-65 key ' + keyHash.slice(0, 10) + '… commands for it.', !ok);
     btn.textContent = 'Wallet connected'; btn.disabled = true;
   }
 
   /* ---------------------------------------------------------------- on-chain ML-DSA-65 (Solana) */
-  var MEASURED = 'Measured in the Solana SBF VM (LiteSVM 0.6.1), on a local validator and live on Solana devnet: 11-12 transactions, at most 1,076,302 compute units and 1,155 bytes each; browser and Seeker-library signatures VERIFIED, tampered ones REJECTED.';
+  var MEASURED = 'Measured in the Solana SBF VM (LiteSVM 0.6.1), on a local validator and live on Solana devnet: 11-12 transactions, at most 1,076,302 compute units and 1,155 bytes each; browser and BouncyCastle (Java) signatures VERIFIED, tampered ones REJECTED.';
   function chainLog(html, bad) { var el = $('#chainLog'); if (el) { el.innerHTML = html; el.classList.toggle('bad', !!bad); } }
   function loadScript(src, globalName) {
     globalName = globalName || 'MoonsealSolana';
@@ -338,7 +338,7 @@ window.Command = (function () {
       jb.onclick = function () { window.__ui.setTime(ctx.t + los.next.inH + 2); reset(); open(); };   // 2 h after Earthrise: a usable margin
     } else jb.hidden = true;
     $('#cmd').style.display = 'grid';
-    setTimeout(function () { keys(); $('#cmdKeys').textContent = 'Keys ready: ' + (st.op.native ? 'Seeker ML-DSA-65 (native, on this phone)' : 'operator ML-DSA-65 (demo key in the base’s registry) generated in ' + st.opMs) +
+    setTimeout(function () { keys(); $('#cmdKeys').textContent = 'Keys ready: ' + (st.op.native ? 'operator ML-DSA-65 (native, on this phone)' : 'operator ML-DSA-65 (demo key in the base’s registry) generated in ' + st.opMs) +
       ' · lander ML-KEM-768 generated in ' + st.kemMs + ' · public keys ' + fmtB(st.op.publicKey.length) + ' / ' + fmtB(st.lander.publicKey.length); }, 30);
   }
   function close() { $('#cmd').style.display = 'none'; }
@@ -348,27 +348,26 @@ window.Command = (function () {
     host.id = 'cmd'; host.setAttribute('role', 'dialog'); host.setAttribute('aria-modal', 'true');
     host.innerHTML =
       '<div class="cmd-sheet glass glass-strong">' +
-      '<div class="cmd-head"><div><div class="eyebrow">Post-quantum · end to end · Solana Seeker</div><h2>Command the lander</h2>' +
+      '<div class="cmd-head"><div><div class="eyebrow">Post-quantum · end to end · Solana</div><h2>Command the lander</h2>' +
       '<p class="cmd-sub">Real <b>ML-DSA-65</b> (FIPS 204) and <b>ML-KEM-768</b> (FIPS 203) running in this browser. The planner decides when a command can physically reach the Moon.</p>' +
       '<div class="cmd-ctx num" id="cmdCtx"></div><div class="cmd-keys num" id="cmdKeys">Generating keys…</div>' +
       '<button class="btn cmd-jump" id="cmdJump" hidden></button>' +
-      '<div class="cmd-wallet"><button class="btn wallet-btn" id="walletBtn"><span class="sol-dot"></span>Connect your Solana wallet · Seeker Seed Vault</button><span class="wallet-line" id="walletLine">Optional: your wallet’s classical key (on a Solana Seeker, the Seed Vault) attests the post-quantum key. Hybrid seal.</span></div></div>' +
+      '<div class="cmd-wallet"><button class="btn wallet-btn" id="walletBtn"><span class="sol-dot"></span>Connect your Solana wallet</button><span class="wallet-line" id="walletLine">Optional: your Solana wallet’s classical key attests the post-quantum key. Hybrid seal.</span></div></div>' +
       '<button class="icon-btn" id="cmdClose" aria-label="Close">✕</button></div>' +
       '<div class="cmd-ctrl"><select id="cmdSel" aria-label="Command">' + COMMANDS.map(function (c) { return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('') + '</select>' +
       '<div class="seg cmd-modes" role="group" aria-label="Scenario">' + MODES.map(function (m, i) { return '<button data-mode="' + m[0] + '" aria-pressed="' + (i === 0) + '">' + m[1] + '</button>'; }).join('') + '</div>' +
       '<button class="btn light" id="cmdSend">Sign &amp; send</button></div>' +
       '<div class="cmd-pipe">' +
-      ['s1|1 · Operator · Solana Seeker', 's2|2 · Encrypt', 's3|3 · Ground station on Solana', 's4|4 · The Moon'].map(function (p) {
+      ['s1|1 · Operator', 's2|2 · Encrypt', 's3|3 · Ground station on Solana', 's4|4 · The Moon'].map(function (p) {
         var a = p.split('|'); return '<div class="st" id="' + a[0] + '"><div class="st-k">' + a[1] + '</div><div class="st-t">Waiting</div><div class="st-x"></div><div class="st-f"></div></div>';
       }).join('') + '</div>' +
       '<div class="cmd-verdict" id="cmdVerdict"></div>' +
       '<div class="cmd-why">' +
       '<div><h4>Why sign post-quantum</h4><p>A lander lives for decades on keys set before launch. Today’s links share secret keys, which survive quantum computers but don’t scale to many operators and relays. Public-key command authority does, and it must stay unforgeable for the asset’s whole life: that is ML-DSA.</p></div>' +
       '<div><h4>Why encrypt post-quantum</h4><p>Anyone can record the uplink today. ML-KEM keeps it unreadable even after large quantum computers exist: “harvest now, decrypt later” is an encryption risk, and this is the encryption leg.</p></div>' +
-      '<div><h4>What Solana does, and doesn’t</h4><p>Solana coordinates an open network of ground stations: who relays which window, and a tamper-evident hash of what was sent. Stations never see the command and can’t forge one. Solana’s own ed25519 is not the root of trust; the Seeker’s ML-DSA key is.</p></div>' +
+      '<div><h4>What Solana does, and doesn’t</h4><p>Solana coordinates an open network of ground stations: who relays which window, and a tamper-evident hash of what was sent. Stations never see the command and can’t forge one. Solana’s own ed25519 is not the root of trust; the operator’s ML-DSA key is.</p></div>' +
       '</div>' +
-      '<div class="cmd-foot">Interop checked: ML-DSA-65 signatures made by this page verify in BouncyCastle 1.81, the library the Seeker app uses, and BouncyCastle signatures verify here. ' +
-      'On the Seeker, the app signs natively; the Seed Vault keeps the classical ed25519 identity, and the post-quantum key lives in the app. ' +
+      '<div class="cmd-foot">Interop checked: ML-DSA-65 signatures made by this page verify in BouncyCastle 1.81 (Java), and BouncyCastle signatures verify here. ' +
       'Uplink packet = KEM ciphertext + nonce + sealed (command + signature). <a href="solana-demo.html" target="_blank" rel="noopener">Anchor a relay proof on Solana devnet →</a></div>' +
       '</div>';
     document.body.appendChild(host);

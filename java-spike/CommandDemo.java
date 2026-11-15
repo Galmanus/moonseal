@@ -10,7 +10,7 @@ import java.util.*;
 /**
  * End-to-end lunar command authentication (challenge #11 crypto layer).
  *
- * Device side (Seeker): genkey, sign.
+ * Device side (phone): genkey, sign.
  * Ground side: verify, enforcing THREE gates:
  *    (1) ML-DSA (FIPS 204) signature valid   -> unforgeable
  *    (2) counter strictly advanced           -> no replay

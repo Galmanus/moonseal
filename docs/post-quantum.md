@@ -4,11 +4,11 @@ A command to a lunar lander has two jobs: it must be **unforgeable** (only the o
 
 | Job | Algorithm | Where it runs |
 |---|---|---|
-| Sign the command | ML-DSA-65 (FIPS 204) | Browser (@noble/post-quantum 0.7.1) or Seeker app (BouncyCastle 1.81) |
+| Sign the command | ML-DSA-65 (FIPS 204) | Browser (@noble/post-quantum 0.7.1) or Android app (BouncyCastle 1.81) |
 | Agree a key with the lander | ML-KEM-768 (FIPS 203) | Browser (@noble/post-quantum 0.7.1) |
 | Seal command and signature | AES-256-GCM | Browser (WebCrypto) |
 | Verify the signature, apply the base's policy | ML-DSA-65 + command registry | Solana program, see [onchain.md](onchain.md) |
-| Vouch for the post-quantum key with hardware | ed25519 message signature | Seed Vault on a Solana Seeker, through Mobile Wallet Adapter |
+| Vouch for the post-quantum key | ed25519 message signature | Your Solana wallet: Wallet Standard on a laptop, Mobile Wallet Adapter on Android |
 
 ## Why post-quantum
 
@@ -40,13 +40,13 @@ The lander's packet is private, but the chain needs something public to check. T
 
 ## Interoperability
 
-The browser and the Seeker app use different implementations: @noble/post-quantum 0.7.1 (JavaScript) and BouncyCastle 1.81 (Java). Signatures made by either verify in the other, in both directions. Both also verify in the Solana program's own verifier (`tools/mldsa-onchain/tests/native.rs`, `tests/staged.rs`), which makes three independent implementations agree on the same signatures.
+The browser and the Android app use different implementations: @noble/post-quantum 0.7.1 (JavaScript) and BouncyCastle 1.81 (Java). Signatures made by either verify in the other, in both directions. Both also verify in the Solana program's own verifier (`tools/mldsa-onchain/tests/native.rs`, `tests/staged.rs`), which makes three independent implementations agree on the same signatures.
 
-## Hybrid seal: the Seed Vault vouches for the post-quantum key
+## Hybrid seal: your Solana wallet vouches for the post-quantum key
 
-The Solana Seeker's Seed Vault holds an ed25519 key in secure hardware. ed25519 is not post-quantum, but it is a strong statement of identity today. moonseal uses it to vouch for the post-quantum key, not to sign commands.
+A Solana wallet holds an ed25519 key. ed25519 is not post-quantum, but it is a strong statement of identity today. moonseal uses it to vouch for the post-quantum key, not to sign commands.
 
-1. Press **Connect your Solana wallet** in **Command**. On a Seeker, Mobile Wallet Adapter reaches the Seed Vault. On a laptop, the page lists Wallet Standard wallets that support `solana:signMessage`. The flow was tested with a mock Wallet Standard wallet; the Mobile Wallet Adapter hop can only be exercised on a phone.
+1. Press **Connect your Solana wallet** in **Command**. On a laptop, the page lists Wallet Standard wallets that support `solana:signMessage`. On Android, Mobile Wallet Adapter reaches a wallet app on the phone. The flow was tested with a mock Wallet Standard wallet; the Mobile Wallet Adapter hop can only be exercised on a phone.
 2. The wallet signs this statement with its ed25519 key:
 
    ```text
@@ -58,13 +58,13 @@ The Solana Seeker's Seed Vault holds an ed25519 key in secure hardware. ed25519 
 
 3. The page verifies the ed25519 signature (@noble/curves) and from then on the lander requires that the command was signed by the attested key.
 
-The result pairs a classical hardware identity with a post-quantum command key. To be exact about what runs where: the Seed Vault signs ed25519 only. ML-DSA-65 signing runs in software, in the browser or in the Seeker app.
+The result pairs a classical wallet identity with a post-quantum command key. To be exact about what runs where: the wallet signs ed25519 only. ML-DSA-65 signing runs in software, in the browser or in the Android app.
 
-The wallet code is pinned in `tools/wallet-bundle` (`@solana-mobile/wallet-standard-mobile` 0.7.0, `@wallet-standard/app` 1.1.1, `@noble/curves` 2.4.0, with `@solana-mobile/mobile-wallet-adapter-protocol` forced to 3.0.1) and bundled into `web/app/wallet-bundle.js`. Mobile Wallet Adapter needs a secure context; see [quickstart.md](quickstart.md#4-run-it-on-a-solana-seeker).
+The wallet code is pinned in `tools/wallet-bundle` (`@solana-mobile/wallet-standard-mobile` 0.7.0, `@wallet-standard/app` 1.1.1, `@noble/curves` 2.4.0, with `@solana-mobile/mobile-wallet-adapter-protocol` forced to 3.0.1) and bundled into `web/app/wallet-bundle.js`. Mobile Wallet Adapter needs a secure context; see [quickstart.md](quickstart.md#4-connect-a-solana-wallet-on-a-phone).
 
 ## Limits
 
-- **Demo keys.** On the web page, the operator's ML-DSA-65 key is derived from a public seed (`demoOperatorSeedHex` in `web/app/onchain-config.js`) so that anyone can try the demo base. A real operator key would live on the Seeker and never be published. The lander's ML-KEM key is generated in the page for the demo.
-- **Keys in memory.** In the browser, keys live in page memory. In the Seeker app, the ML-DSA key is stored in the app's files and is not yet wrapped by the Android Keystore.
-- **Text-only bridge.** The Seeker app's bridge signs text, not raw bytes, so on that build the binary uplink ticket is signed with the demo operator key.
+- **Demo keys.** On the web page, the operator's ML-DSA-65 key is derived from a public seed (`demoOperatorSeedHex` in `web/app/onchain-config.js`) so that anyone can try the demo base. A real operator key would stay with the operator and never be published. The lander's ML-KEM key is generated in the page for the demo.
+- **Keys in memory.** In the browser, keys live in page memory. In the Android app, the ML-DSA key is stored in the app's files and is not yet wrapped by the Android Keystore.
+- **Text-only bridge.** The Android app's bridge signs text, not raw bytes, so on that build the binary uplink ticket is signed with the demo operator key.
 - **Bandwidth.** About 4.5 KB per command is large for a deep-space uplink. Signing a command plan, rather than each command, is the realistic use.

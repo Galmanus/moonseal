@@ -1,6 +1,6 @@
 # Quickstart
 
-This page gets you from a fresh clone to each part of moonseal: the planner in your browser, the on-chain verification against a local validator or Solana devnet, the Solana Seeker phone, and the test suites.
+This page gets you from a fresh clone to each part of moonseal: the planner in your browser, the on-chain verification against a local validator or Solana devnet, a Solana wallet on a phone, and the test suites.
 
 ## 1. Run the site
 
@@ -97,16 +97,16 @@ Use a disposable key with devnet SOL only. Anyone who can load your page can rea
 
 The public devnet endpoint rate-limits by IP (HTTP 429). The client backs off and retries, but two runs started at the same moment from one network can still time out. If that happens, the page says so and refunds the partly written buffer; wait half a minute and press again.
 
-## 4. Run it on a Solana Seeker
+## 4. Connect a Solana wallet on a phone
 
-The **Connect your Solana wallet** button reaches the Seeker's Seed Vault through Mobile Wallet Adapter, which requires a secure context. `localhost` counts as one, so forward the port over USB:
+On Android, the **Connect your Solana wallet** button reaches a wallet app on the phone through Mobile Wallet Adapter, which requires a secure context. `localhost` counts as one, so forward the port over USB:
 
 ```bash
 adb reverse tcp:8787 tcp:8787     # the site
 adb reverse tcp:8899 tcp:8899     # optional: the local validator
 ```
 
-Open <http://localhost:8787/app.html> in the phone's browser, open **Command**, press **Connect your Solana wallet**, and approve twice in the Seed Vault prompt. The Seed Vault signs an ed25519 attestation of the post-quantum key; the post-quantum signing itself runs in software. See [post-quantum.md](post-quantum.md).
+Open <http://localhost:8787/app.html> in the phone's browser, open **Command**, press **Connect your Solana wallet**, and approve twice in the wallet (connect, then sign). The wallet signs an ed25519 attestation of the post-quantum key; the post-quantum signing itself runs in software. See [post-quantum.md](post-quantum.md).
 
 ## 5. Run the tests
 

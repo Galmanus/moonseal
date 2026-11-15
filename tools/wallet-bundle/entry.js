@@ -1,5 +1,5 @@
-// Solana wallet connection for moonseal (no CDN): Mobile Wallet Adapter, so a Solana Seeker's Seed Vault can
-// sign in its own browser, plus Wallet Standard discovery for desktop wallets. ed25519 verification via noble.
+// Solana wallet connection for moonseal (no CDN): Mobile Wallet Adapter, so a wallet app on an Android phone
+// can sign from the phone's browser, plus Wallet Standard discovery for desktop wallets. ed25519 verification via noble.
 import { registerMwa, createDefaultAuthorizationCache, createDefaultChainSelector, createDefaultWalletNotFoundHandler } from '@solana-mobile/wallet-standard-mobile';
 import { getWallets } from '@wallet-standard/app';
 import { ed25519 } from '@noble/curves/ed25519.js';

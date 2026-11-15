@@ -22,8 +22,8 @@
 *.aab
 *.class
 *.tar.gz
-seeker-spike/lib/
-seeker-spike/termux-bundle/
+java-spike/lib/
+java-spike/termux-bundle/
 .pytest_cache/
 __pycache__/
 *.pyc

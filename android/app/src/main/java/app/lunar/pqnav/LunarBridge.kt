@@ -17,7 +17,7 @@ import java.security.spec.X509EncodedKeySpec
 
 /**
  * Ponte nativa de assinatura pós-quântica exposta ao console web.
- * Espelha exatamente o core provado em seeker-spike/ (ML-DSA-65, FIPS 204, BouncyCastle).
+ * Espelha exatamente o core provado em java-spike/ (ML-DSA-65, FIPS 204, BouncyCastle).
  *
  * Métodos chamados pelo console (web/index.html):
  *   LunarBridge.signMLDSA(payload)        -> assinatura base64
@@ -27,8 +27,8 @@ import java.security.spec.X509EncodedKeySpec
  * HARDENING pendente (honesto, não implementado nesta v1):
  *   - embrulhar a chave privada ML-DSA com uma chave AES no Android Keystore/StrongBox
  *     (elemento seguro), em vez de persistir em filesDir.
- *   - vincular identidade do device à chave ed25519 do Seed Vault (atestação).
- *   o Seed Vault NÃO assina ML-DSA; ele dá custódia/identidade. não vender "chip assina pós-quântico".
+ *   - vincular a chave ML-DSA à chave ed25519 da carteira Solana do operador (atestação).
+ *   a carteira NÃO assina ML-DSA; ela dá identidade. não vender "chip assina pós-quântico".
  */
 class LunarBridge(private val ctx: Context) {
 

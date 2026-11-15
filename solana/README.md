@@ -40,7 +40,7 @@ upgrade authority = F9neSDGmb6tyPtuSFp4we2zvFA5WAaQYuFjBbagzmvTK (id.json).
 gotcha: `anchor deploy` hit devnet congestion ("max retries exceeded"); resumed with
 `solana program deploy target/deploy/lunar_contacts.so --program-id target/deploy/lunar_contacts-keypair.json --buffer <BUFFER> --with-compute-unit-price 50000`.
 to upgrade later: `anchor build && solana program deploy ... --program-id ...` (same id).
-then a client posts the planner's windows and the Seeker app records command hashes via
+then a client posts the planner's windows and an operator app records command hashes via
 `confirm_contact`. a TS client sketch is the next step; the IDL is at target/idl/.
 
 ## honest scope

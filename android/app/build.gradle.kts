@@ -13,7 +13,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "0.1.0"
-        // sem lib nativa: o APK roda em arm64-v8a (exigência da dApp store) e demais ABIs.
+        // sem lib nativa: o APK roda em arm64-v8a e demais ABIs.
     }
 
     buildTypes {

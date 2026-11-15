@@ -1,6 +1,6 @@
 # Architecture
 
-moonseal has four parts. An offline **data pipeline** (Python, `core/`) turns NASA datasets into compact files for the browser. A static **web app** (`web/app.html`) plans landing windows, renders the Moon and runs the command pipeline. A **Solana program** (`tools/mldsa-onchain`) verifies post-quantum signatures and keeps each base's command policy. A **Solana Seeker app** (`android/`) signs commands natively on the phone.
+moonseal has four parts. An offline **data pipeline** (Python, `core/`) turns NASA datasets into compact files for the browser. A static **web app** (`web/app.html`) plans landing windows, renders the Moon and runs the command pipeline. A **Solana program** (`tools/mldsa-onchain`) verifies post-quantum signatures and keeps each base's command policy. An **Android app** (`android/`) signs commands natively on the phone.
 
 ```mermaid
 flowchart TB
@@ -18,7 +18,8 @@ flowchart TB
   end
   W3 -->|"transactions via app/moonseal-solana.js"| S1
   S1 --- S2
-  PH["Solana Seeker<br/>Seed Vault + android/ app"] -->|"ed25519 attestation via Mobile Wallet Adapter"| W3
+  WL["Solana wallet<br/>Wallet Standard or Mobile Wallet Adapter"] -->|"ed25519 attestation of the post-quantum key"| W3
+  AN["Android app<br/>android/, native ML-DSA-65 signing"] -.-> W3
 ```
 
 ## Data pipeline
@@ -61,7 +62,7 @@ The first console (`web/index.html`) and the first Solana demo (`web/solana-demo
 
 ```mermaid
 sequenceDiagram
-  participant O as Operator (browser or Seeker)
+  participant O as Operator (browser or phone)
   participant P as Planner
   participant S as Untrusted ground station
   participant C as Solana program
@@ -87,7 +88,7 @@ The lander's gates and the five scenarios (honest, tampered in transit, forged, 
 
 `solana/programs/lunar_contacts` is the project's first Solana prototype, an Anchor program for ground-station contact windows (`register_station`, `post_window`, `claim_window`, `confirm_contact`). It is deployed on devnet at `HuBV5gmKwQJvJuGvHLSY58hq2DE76khJYMrCzz6ipFYk` and used by `web/solana-demo.html`. It does not verify signatures.
 
-## The Seeker app
+## The Android app
 
 `android/` is a WebView app that wraps the first console and exposes a native bridge (`LunarBridge.kt`): `signMLDSA(payload)`, `verifyMLDSA(payload, sig)` and `publicKeyB64()`, implemented with BouncyCastle 1.81. ML-DSA-65 signatures made by BouncyCastle and by the browser's library verify each other in both directions, and both verify on chain.
 
@@ -112,5 +113,5 @@ Three things are pending, and the code says so:
 | `tools/pq-bundle/`, `tools/wallet-bundle/` | Pinned sources of the two browser bundles |
 | `solana/client/` | Client library, registry tool, end-to-end, rate-limit and diagnostic scripts |
 | `solana/programs/lunar_contacts/` | First Solana prototype (Anchor) |
-| `android/` | Seeker app |
-| `seeker-spike/` | Java spike of the signed command format |
+| `android/` | Android app |
+| `java-spike/` | Java spike of the signed command format |

@@ -124,7 +124,7 @@
       </div>
       <div class="who">
         <div class="wtag">for a command operator</div>
-        <div class="wtxt">Sign a command on the Seeker with a post-quantum signature. The asset executes only if the signature verifies, the counter is fresh (anti-replay), and it is inside a real comm window. A forged, replayed, or out-of-window command is rejected.</div>
+        <div class="wtxt">Sign a command with a post-quantum signature. The asset executes only if the signature verifies, the counter is fresh (anti-replay), and it is inside a real comm window. A forged, replayed, or out-of-window command is rejected.</div>
       </div>
     </div>
     <span class="toggle-adv" id="toggleAdv">show technical details (crypto, on-chain) ▾</span>
@@ -227,7 +227,7 @@
       <span class="tg oow" id="tg-oow">force out of window</span>
     </div>
 
-    <button class="send" id="send">sign on the Seeker and send</button>
+    <button class="send" id="send">sign and send</button>
 
     <div class="gates" id="gates" style="display:none">
       <div class="gate" id="g1"><span class="lamp"></span><span>gate 1 · ML-DSA signature (post-quantum)</span><span class="sub" id="g1s"></span></div>
@@ -240,7 +240,7 @@
 
   <div class="card adv">
     <h2>why post-quantum</h2>
-    <div>the map doesn't need crypto. the <b>command</b> does. a forged command to a lunar asset is not a data leak, it is takeover: point the antenna off-Earth, drain the battery, brick the lander. a classical signature (ed25519) rests on math a future quantum computer breaks, and the asset lives for decades on a key you cannot rotate once it is on the Moon. so the signing authority must be quantum-resistant <i>from launch</i>. this is a longevity and forgery argument, not "harvest now, decrypt later" (that is about encryption, not signatures). every command is signed <b>hybrid</b>: ed25519 (classical, Seed Vault identity) <b>and</b> ML-DSA (FIPS 204, post-quantum, keystore). if either scheme holds, the command is still authentic.</div>
+    <div>the map doesn't need crypto. the <b>command</b> does. a forged command to a lunar asset is not a data leak, it is takeover: point the antenna off-Earth, drain the battery, brick the lander. a classical signature (ed25519) rests on math a future quantum computer breaks, and the asset lives for decades on a key you cannot rotate once it is on the Moon. so the signing authority must be quantum-resistant <i>from launch</i>. this is a longevity and forgery argument, not "harvest now, decrypt later" (that is about encryption, not signatures). every command is signed <b>hybrid</b>: ed25519 (classical, wallet identity) <b>and</b> ML-DSA (FIPS 204, post-quantum). if either scheme holds, the command is still authentic.</div>
     <div class="foot">cost is real: an ML-DSA-65 signature is kilobytes against tens of bytes for ed25519, on a starved telecommand link. justified for long-lived, high-value, hard-to-rekey assets, which is exactly this one. ESA's E2EQSS proposes this same ML-DSA-65 + ML-KEM-768 direction for CCSDS/SDLS; it is not yet a ratified standard.</div>
   </div>
 </div>
@@ -264,7 +264,7 @@ el('mode').textContent = BRIDGE ? 'on-device (native bridge)' : 'preview browser
 el('mode').className = 'mode ' + (BRIDGE ? 'device' : 'dev');
 el('bridgenote').innerHTML = BRIDGE
   ? 'real ML-DSA signing and verification via the native bridge (bouncycastle/keystore).'
-  : 'preview without a device: gate 1 below is a <b>labeled stand-in</b>. in the app (WebView on the Seeker) it runs real ML-DSA. it is not fake crypto dressed up as real.';
+  : 'preview without a device: gate 1 below is a <b>labeled stand-in</b>. in the Android app (WebView) it runs real ML-DSA. it is not fake crypto dressed up as real.';
 
 el('src').textContent = D.source;
 

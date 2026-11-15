@@ -8,7 +8,7 @@ window.MOONSEAL_ONCHAIN = {
   // network: tools/mldsa-onchain/keys/registry-keypair.json. Set up with solana/client/registry.mjs.
   registry: '2QYth8MJoLCdRgWckS6QTcjjvBoESFcsohRrLxeAoQN6',
   // PUBLIC seed of the demo operator key = sha256("moonseal devnet demo operator v1"), so anyone can press the
-  // button. Devnet demo only: a real operator key lives on the Solana Seeker and is never published.
+  // button. Devnet demo only: a real operator key stays with the operator and is never published.
   demoOperatorSeedHex: '5129885dcef4967b6acb507b9432dc349a4db1229e4627497e9e2ad2641396eb',
   networks: [
     { name: 'local validator', rpc: 'http://127.0.0.1:8899', programId: '3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7', airdrop: true },

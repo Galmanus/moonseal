@@ -4,7 +4,7 @@
 //   bun registry.mjs <rpc> <programId> add|remove <payer.json> <registryPubkey> <keyIdHex> [authority.json]
 //   bun registry.mjs <rpc> <programId> show <registryPubkey>
 // The demo operator key is derived from a PUBLIC seed (sha256 of DEMO_SEED_TEXT) so anyone can press the
-// button on the web page; a real operator key lives on the Solana Seeker and never leaves it.
+// button on the web page; a real operator key stays with the operator and is never published.
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { Keypair } from "@solana/web3.js";

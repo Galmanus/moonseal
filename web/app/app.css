@@ -404,6 +404,13 @@ html.lowfx #panel { background: rgba(12, 12, 14, 0.94); }
 .linkbtn:hover { text-decoration: underline; text-underline-offset: 3px; } .linkbtn:disabled { opacity: .55; cursor: progress; }
 .ask-out { margin-top: 4px; font-size: .8rem; color: var(--fg2); line-height: 1.45; } .ask-out:empty { display: none; }
 .ask-out.ok b { color: var(--good); } .ask-out.bad b { color: var(--warn, #ffb340); } .ask-out a { color: var(--earth); }
+/* signal to Earth (radio.js) */
+.sig { margin: 10px 0 4px; padding: 10px 12px; border-radius: 12px; background: rgba(94,177,255,.06); border: 1px solid rgba(94,177,255,.16); }
+.sig-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: .85rem; }
+.sig-row b { font-weight: 600; } .sig-row b.ok { color: var(--good); } .sig-row b.warn, .sig-row b.bad { color: var(--warn, #ffb340); }
+.sig-sub { margin: 3px 0 8px; font-size: .78rem; color: var(--fg2); line-height: 1.45; }
+.sig-stay span { color: var(--fg2); }
+.sig .linkbtn { margin-top: 8px; text-align: left; }
 .cmd-sheet { width: min(1220px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow-y: auto; border-radius: 28px; padding: 26px 28px 22px; }
 .cmd-head { display: flex; gap: 16px; align-items: flex-start; }
 .cmd-head h2 { margin: 6px 0 6px; font-size: clamp(1.7rem, 2.6vw, 2.4rem); letter-spacing: -0.03em; line-height: 1.05; }

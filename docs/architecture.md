@@ -46,6 +46,7 @@ flowchart LR
 | `app/ephem.js` | Sun and Earth azimuth and elevation for any site and hour, from the sub-point tables, with Earth's topocentric parallax |
 | `app/model.js` | The planner: visibility against the terrain horizon, availability, longest night and blackout, countdowns |
 | `app/globe.js` | The renderer: LROC color and LOLA relief on the globe, the polar cap from LOLA with ray-marched shadows, site close-ups |
+| `app/radio.js` | Signal to Earth: a lander can radio Earth when Earth clears the site's skyline and a NASA Deep Space Network dish (Goldstone, Madrid, Canberra) has the Moon at least 10° up. The Moon's place in Earth's sky comes from the Astronomical Almanac low-precision series and sidereal time (at worst 0.256° from JPL Horizons over 2026-2027); strength from a free-space link budget for a stated reference radio; plus the live NASA DSN Now feed, filtered to Moon spacecraft. Tests: `node --test tests/radio.test.mjs` |
 | `app/budget.js` | The render budget: each frame's GPU time (a WebGL timer query, or the frame interval where the browser has none) steps resolution and shadow steps down on a GPU that cannot keep up. Tests: `node --test tests/budget.test.mjs` |
 | `app/site_tiles.js` | Loads the NASA PGDA 5 m site DEMs as a third level of detail for close-ups |
 | `app/ui.js` | Views (Moon, South Pole, Site, Command), the Why-the-south-pole entry on the opening screen, the site panel (the answer first, technical detail folded under More details), timeline, comparison |

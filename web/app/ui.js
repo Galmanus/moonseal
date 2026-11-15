@@ -179,6 +179,11 @@
         '<div class="meter"><div class="row"><span>Sunlight during the stay (power)</span><b class="num" id="mSun"></b></div><div class="bar sun"><span id="bSun"></span></div></div>' +
         '<div class="meter"><div class="row"><span>Earth in view during the stay (radio)</span><b class="num" id="mEar"></b></div><div class="bar earth"><span id="bEar"></span></div></div>' +
         '<div class="ask-sol"><button class="linkbtn" id="askEarth">Is Earth in view right now? Ask Solana ›</button><div class="ask-out" id="askOut"></div></div>' +
+        // signal to Earth (radio.js): Earth over the skyline AND a NASA Deep Space Network dish with the Moon in its sky
+        '<div class="sig" id="sig"><div class="sig-row"><span>Signal to Earth</span><b class="num" id="sigNow"></b></div>' +
+          '<div class="sig-sub" id="sigSub"></div>' +
+          '<div class="sig-row sig-stay"><span>Radio link during the stay, with a NASA dish</span><b class="num" id="mLink"></b></div>' +
+          '<button class="linkbtn" id="dsnLive">Listen live: which Moon spacecraft are talking to Earth now ›</button><div class="ask-out" id="dsnOut"></div></div>' +
         '<button class="btn wide light" id="nextGood">Find the next good time to land</button>' +
         '<p class="hint">On the timeline below, <b>green</b> marks every good time to land. Press ▶ to watch the Sun and Earth move.</p>' +
         '<button class="btn wide pq seal-cta" id="cmdOpen"><span class="pq-dot"></span>Seal this site on Solana</button>' +
@@ -204,6 +209,7 @@
       '</details>';
     $('#closeSite').onclick = closeSite;
     $('#askEarth').onclick = askEarth;
+    $('#dsnLive').onclick = listenLive;
     var mapTxt = function () { return state.overlay ? 'Hide the sunlight and Earth map' : 'Show sunlight and Earth on the map'; };
     var mt = $('#mapToggle'); if (mt) { mt.textContent = mapTxt(); mt.onclick = function () { $('#mapBtn').click(); mt.textContent = mapTxt(); }; }
     var more = $('#panelBody .more'); if (more) more.addEventListener('toggle', function () { if (more.open) scheduleLive(); });   // the skyline draws at its real size
@@ -260,6 +266,7 @@
     var ms = Model.mission(m, t, state.durD * 24), v = Model.verdict(ms, state.need);
     $('#mSun').textContent = pct(ms.sunPct); $('#bSun').style.width = (ms.sunPct * 100).toFixed(1) + '%';
     $('#mEar').textContent = pct(ms.earthPct); $('#bEar').style.width = (ms.earthPct * 100).toFixed(1) + '%';
+    updateSignal(m, t, ms);
     $('#fDark').textContent = ms.longestDark ? hrs(ms.longestDark) : 'none';
     $('#fBlack').textContent = ms.longestBlackout ? hrs(ms.longestBlackout) : 'none';
     var vEl = $('#verdict'); vEl.className = 'verdict ' + v.level;
@@ -684,6 +691,54 @@
   }
   /* Ask Solana whether Earth is in view from this spot at the selected hour: the moonseal LOS program computes it from
      the planner's own inputs (the JPL Horizons sub-Earth point and distance, the LOLA skyline) and logs the answer. */
+  /* Signal to Earth (radio.js): a lander here can radio Earth when Earth clears the skyline and a NASA Deep Space
+     Network dish has the Moon in its sky. Strength from a link budget for a stated reference lander radio. */
+  function rate(bps) { return bps >= 1e6 ? (bps / 1e6).toFixed(bps >= 1e7 ? 0 : 1) + ' Mb/s' : Math.round(bps / 1e3) + ' kb/s'; }
+  function updateSignal(m, t, ms) {
+    var now = $('#sigNow'), sub = $('#sigSub');
+    if (!now || !sub || !window.Radio) return;
+    var g = Radio.signalAt(m, t), b = g.budget, ce = Model.countdown(m.earM, t);
+    if (!g.earthUp) {
+      now.className = 'num bad'; now.textContent = 'No signal';
+      sub.textContent = 'Earth is ' + Math.abs(g.earthMargin).toFixed(1) + '° below the skyline' + (ce.inH != null ? '; it rises in ' + dur(ce.inH) : '') + '.';
+    } else if (!g.dish.up) {
+      now.className = 'num bad'; now.textContent = 'No signal';
+      sub.textContent = 'Earth is in view, but no NASA Deep Space Network dish has the Moon in its sky' +
+        (g.nextDishH != null ? '; the next one gets it in ' + dur(g.nextDishH) : '') + '.';
+    } else {
+      now.className = 'num ' + (g.marginal ? 'warn' : 'ok'); now.textContent = g.marginal ? 'Weak' : 'Strong';
+      sub.textContent = (g.marginal ? 'Earth is only ' + g.earthMargin.toFixed(1) + '° over the skyline; the terrain may clip it. ' : '') +
+        'The ' + g.dish.station.name + ' dish has the Moon ' + Math.round(g.dish.el) + '° up · ' + b.prDbm.toFixed(0) + ' dBm reaches the dish · up to ' +
+        rate(b.maxBps) + ' (reference lander radio: X-band, 5 W, 10 dBi antenna, to a 34 m dish).';
+    }
+    var lk = $('#mLink'); if (lk) lk.textContent = Math.floor(Radio.linkPct(m, ms.a, ms.b) * 100) + '%';   // floored: 100% only when every hour has a link
+  }
+  /* The real thing: which Moon spacecraft NASA's dishes are working right now (public DSN Now feed). Everything taken
+     from the feed is escaped or coerced to a number before it reaches the page. */
+  async function listenLive() {
+    var out = $('#dsnOut'), btn = $('#dsnLive');
+    if (!out || !btn || !window.Radio) return;
+    var src = '<a href="https://eyes.nasa.gov/dsn/dsn.html" target="_blank" rel="noopener">NASA DSN Now</a>';
+    btn.disabled = true; out.className = 'ask-out'; out.textContent = 'Listening to NASA’s Deep Space Network…';
+    try {
+      var r = await Radio.live(), when = r.time ? new Date(r.time).toISOString().slice(11, 16) + ' UTC' : 'just now';
+      if (!r.moon.length) {
+        out.className = 'ask-out';
+        out.innerHTML = 'At ' + esc(when) + ' no NASA dish is working a Moon spacecraft. Passes come and go through the day; try again later. Source: ' + src + '.';
+      } else {
+        out.className = 'ask-out ok';
+        out.innerHTML = r.moon.map(function (x) {
+          return '<b>' + esc(x.craft) + '</b> · dish ' + esc(x.dish) + ', ' + esc(x.complex) + ' · ' +
+            (x.down ? 'hearing it on ' + esc(x.down.band) + '-band at ' + (+x.down.dBm).toFixed(1) + ' dBm' + (x.down.bps > 0 ? ', ' + rate(+x.down.bps) : '')
+                    : 'pointed at it, no downlink this moment') +
+            (x.rangeKm ? ' · ' + Math.round(+x.rangeKm).toLocaleString('en') + ' km away' : '');
+        }).join('<br>') + '<br>Live at ' + esc(when) + ', from ' + src + '.';
+      }
+    } catch (e) {
+      out.className = 'ask-out bad'; out.textContent = 'Could not reach NASA DSN Now: ' + e.message;
+    }
+    btn.disabled = false;
+  }
   async function askEarth() {
     var s = state.site, out = $('#askOut'), btn = $('#askEarth');
     if (!s || !window.Seal || !out) return;

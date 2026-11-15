@@ -367,24 +367,14 @@
       var h = (Date.UTC(y, mo, 1) - t0) / 3600000; if (h >= 0 && h <= N) MONTH_H.push({ h: h, y: y, m: mo });
     }
   })();
-  function timelineSites() {
-    var list = [];
-    if (state.site) list.push(state.site);
-    var max = window.innerWidth <= 820 ? (state.site ? 2 : 3) : 5;   // phones with the sheet open: a shorter dock
-    POLE.forEach(function (s) { if (list.indexOf(s) < 0 && list.length < max) list.push(s); });
-    return list;
-  }
   function rebuildTimeline() { tl.stale = true; drawTimeline(); }
+  /* Only the selected site, in three rows named in plain words: its good days to land (the answer), then the two
+     reasons, sunlight and Earth in view. Other sites are compared in the panel ("Other sites, same dates").
+     Without a site the dock keeps a plain date track to drag. */
   function layoutTimeline() {
-    var sites = timelineSites(), rows = [], y = 18;
-    sites.forEach(function (s, i) {
-      var sel = s === state.site;
-      rows.push({ s: s, y: y, kind: 'sun', h: sel ? 9 : 6 }); y += (sel ? 9 : 6) + 2;
-      rows.push({ s: s, y: y, kind: 'earth', h: sel ? 9 : 6 }); y += (sel ? 9 : 6) + 2;
-      if (sel) { rows.push({ s: s, y: y, kind: 'good', h: 6 }); y += 8; }
-      y += i === 0 && sel ? 8 : 5;
-    });
-    tl.rows = rows; tl.height = Math.max(64, y + 2);
+    var s = state.site;
+    tl.rows = s ? [{ s: s, y: 18, kind: 'good', h: 16 }, { s: s, y: 41, kind: 'sun', h: 8 }, { s: s, y: 56, kind: 'earth', h: 8 }] : [];
+    tl.height = s ? 68 : 34;
   }
   /* Landing windows of the selected site: [start, end) hour ranges where Model.goodStarts says a landing of
      the chosen stay keeps power (nights shorter than the battery) and Earth contact (blackouts shorter than
@@ -432,16 +422,23 @@
       if ((v1 - v0) / SW * 34 < 24 * 31) c.fillText(lbl, x + 3, 10);
       else if (mo.m % 3 === 0) c.fillText(lbl, x + 3, 10);
     });
-    var cols = Math.max(1, Math.round(SW * dpr)), img = c.createImageData(cols, 1);
+    var cols = Math.max(1, Math.round(SW * dpr)), img = c.createImageData(cols, 1), segs = landingSegs();
+    var track = function (y, h) { c.save(); c.beginPath(); roundRect(c, G, y, SW, h, Math.min(4, h / 2)); c.clip(); c.fillStyle = 'rgb(30,31,36)'; c.fillRect(G, y, SW, h); };
     tl.rows.forEach(function (r) {
-      var m = Model.compute(r.s), good = r.kind === 'good' ? Model.goodStarts(m, state.durD * 24, state.need) : null;
-      var cum = r.kind === 'sun' ? m.cS : m.cE, rgb = r.kind === 'sun' ? [255, 179, 64] : r.kind === 'earth' ? [94, 177, 255] : [50, 215, 75];
+      if (r.kind === 'good') {                // the answer: solid green wherever a landing of the chosen stay works
+        track(r.y, r.h); c.fillStyle = 'rgb(50,215,75)';
+        (segs || []).forEach(function (sg) {
+          if (sg[1] < v0 || sg[0] > v1) return;
+          var xa = G + (Math.max(sg[0], v0) - v0) / (v1 - v0) * SW, xb = G + (Math.min(sg[1], v1) - v0) / (v1 - v0) * SW;
+          c.fillRect(xa, r.y, Math.max(3, xb - xa), r.h);   // short windows stay 3 px wide
+        });
+        c.restore(); return;
+      }
+      var m = Model.compute(r.s), cum = r.kind === 'sun' ? m.cS : m.cE, rgb = r.kind === 'sun' ? [255, 179, 64] : [94, 177, 255];
       for (var x = 0; x < cols; x++) {
         var h0 = v0 + x / cols * (v1 - v0), h1 = v0 + (x + 1) / cols * (v1 - v0);
         var a0 = Math.max(0, Math.floor(h0)), a1 = Math.min(N, Math.max(a0 + 1, Math.floor(h1)));
-        var f;
-        if (good) { var cnt = 0; for (var k = a0; k < a1; k++) cnt += good[k]; f = cnt / (a1 - a0); }
-        else f = (cum[a1] - cum[a0]) / (a1 - a0);
+        var f = (cum[a1] - cum[a0]) / (a1 - a0);
         var o = x * 4, base = 26;
         img.data[o] = base + (rgb[0] - base) * f; img.data[o + 1] = base + (rgb[1] - base) * f; img.data[o + 2] = (base + 4) + (rgb[2] - base - 4) * f; img.data[o + 3] = 255;
       }
@@ -450,36 +447,19 @@
       c.save(); c.beginPath(); roundRect(c, G, r.y, SW, r.h, Math.min(3, r.h / 2)); c.clip();
       c.drawImage(tmp, 0, 0, cols, 1, G, r.y, SW, r.h); c.restore();
     });
-    // landing windows: full-height green columns with a solid cap on the axis (short ones stay 2 px wide)
-    var segs = landingSegs();
-    if (segs) {
-      var caps = [];
-      c.fillStyle = 'rgba(50,215,75,.42)';
-      segs.forEach(function (sg) {
-        if (sg[1] < v0 || sg[0] > v1) return;
-        var xa = G + (Math.max(sg[0], v0) - v0) / (v1 - v0) * SW, xb = G + (Math.min(sg[1], v1) - v0) / (v1 - v0) * SW;
-        var w = Math.max(3, xb - xa);
-        c.fillRect(xa, 14, w, H - 14); caps.push([xa, w]);
-      });
-      c.fillStyle = 'rgb(50,215,75)';
-      caps.forEach(function (p) { c.fillRect(p[0], 13, p[1], 6); });
-    }
-    // labels
-    var seen = {};
-    tl.rows.forEach(function (r) {
-      if (seen[r.s.id]) return; seen[r.s.id] = 1;
-      var sel = r.s === state.site;
-      c.fillStyle = sel ? '#f5f5f7' : 'rgba(255,255,255,.55)'; c.font = (sel ? '600 ' : '500 ') + '11.5px ' + getComputedStyle(document.body).fontFamily;
-      var name = r.s.name.length > 19 ? r.s.name.slice(0, 18) + '…' : r.s.name;
-      c.fillText(name, 2, r.y + (sel ? 14 : 10));
-    });
+    if (!tl.rows.length) { track(18, 10); c.restore(); }
+    // labels: what each row means, in the row's colour (no legend to decode)
+    var ff = getComputedStyle(document.body).fontFamily;
+    var LBL = { good: ['Good days to land', '600 12px ', '#32d74b'], sun: ['Sunlight', '500 11px ', 'rgba(255,179,64,.92)'], earth: ['Earth in view', '500 11px ', 'rgba(94,177,255,.95)'] };
+    tl.rows.forEach(function (r) { var L = LBL[r.kind]; c.fillStyle = L[2]; c.font = L[1] + ff; c.fillText(L[0], 2, r.y + r.h / 2 + 4); });
+    if (!tl.rows.length) { c.fillStyle = 'rgba(255,255,255,.55)'; c.font = '500 11px ' + ff; c.fillText('Drag the date', 2, 27); }
     tl.stale = false; tl.drawnW = W;
   }
   function roundRect(c, x, y, w, h, r) { c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
   function drawTimeline() {
     var cv = tl.cv; if (!cv) return;
     var showRows = !!state.site || state.view !== 'hero';
-    if (cv.hidden === showRows) { cv.hidden = !showRows; $('#tlLegend').hidden = !showRows; requestAnimationFrame(layoutInsets); }
+    if (cv.hidden === showRows) { cv.hidden = !showRows; requestAnimationFrame(layoutInsets); }
     if (!showRows) return;
     layoutTimeline();
     updateLandingLegend();
@@ -494,11 +474,6 @@
     c.drawImage(tl.off, 0, 0);
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
     var G = tl.gutter, SW = W - G - 4, v0 = state.tl.v0, v1 = state.tl.v1;
-    // mission window
-    if (state.site) {
-      var xa = G + (state.t - v0) / (v1 - v0) * SW, xb = G + (state.t + state.durD * 24 - v0) / (v1 - v0) * SW;
-      c.fillStyle = 'rgba(255,255,255,.10)'; c.fillRect(xa, 14, Math.max(2, xb - xa), H - 14);
-    }
     var x = G + (state.t - v0) / (v1 - v0) * SW;
     c.fillStyle = '#fff'; c.fillRect(Math.round(x) - 1, 13, 2, H - 13);
     c.beginPath(); c.arc(x, 13, 4.5, 0, 7); c.fill();

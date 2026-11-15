@@ -348,8 +348,8 @@ window.Command = (function () {
     host.id = 'cmd'; host.setAttribute('role', 'dialog'); host.setAttribute('aria-modal', 'true');
     host.innerHTML =
       '<div class="cmd-sheet glass glass-strong">' +
-      '<div class="cmd-head"><div><div class="eyebrow">Stay in command</div><h2>Command the lander</h2>' +
-      '<p class="cmd-sub">A command reaches the lander only while Earth is in view. It is <b>signed</b> so no one else can forge it, with a signature designed to hold even against future quantum computers, <b>sealed</b> so only the lander can read it, and <b>checked on Solana</b> against the base’s list of who may command it. Real cryptography, running in this browser.</p>' +
+      '<div class="cmd-head"><div><div class="eyebrow">Keep control of your lander</div><h2>Send a command, or try to hijack it</h2>' +
+      '<p class="cmd-sub">Commands from the lander’s own team go through. A command <b>changed on the way</b>, <b>forged</b> by an attacker or <b>replayed</b> from the past is refused, by the lander and in public on Solana. Each command is signed with NIST’s new signature standard, built to resist even future quantum computers, and sealed so only the lander can read it. Real cryptography, running in this browser.</p>' +
       '<div class="cmd-ctx num" id="cmdCtx"></div><div class="cmd-keys num" id="cmdKeys">Generating keys…</div>' +
       '<button class="btn cmd-jump" id="cmdJump" hidden></button>' +
       '<div class="cmd-wallet"><button class="btn wallet-btn" id="walletBtn"><span class="sol-dot"></span>Connect your Solana wallet</button><span class="wallet-line" id="walletLine">Optional: let your Solana wallet vouch for the signing key, as a second lock.</span></div></div>' +

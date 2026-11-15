@@ -4,7 +4,7 @@
 |---|---|
 | Event | NASA Space Apps Challenge 2026, Florianópolis, Brazil (in person, 14-15 November 2026) |
 | Challenge | #11, Lunar Landing Site Navigator |
-| Project | moonseal: Land in the light. Stay in command. |
+| Project | moonseal: Land on the right day. Keep control of your lander. |
 | Code | <https://github.com/Galmanus/moonseal> (MIT) |
 
 ## The challenge, as we read it
@@ -13,13 +13,11 @@ Build a tool that helps compare lunar south-pole landing sites and dates by illu
 
 ## Summary
 
-moonseal is a free web planner that shows, hour by hour through 2026 and 2027, when a landing site at the Moon's south pole gives a lander sunlight to charge and Earth in view to call home.
+moonseal helps a mission to the Moon's south pole twice. Before landing, it shows which days a lander will have sunlight for power and a clear line to Earth for radio. After landing, it makes sure nobody can hijack it.
 
-Pick a site, or tap any spot on the Moon, and choose how long the mission stays. moonseal checks the Sun and Earth against that spot's real skyline, using NASA JPL Horizons positions and LRO LOLA terrain, and marks in green every hour you could land without losing sunlight or Earth for longer than your lander can handle. A plain verdict says "Good time to land", "Risky" or "Not a good time", and why.
+Why it is needed: at the south pole the Sun barely rises and Earth hides behind the mountains, so light and radio contact come and go. A lander that touches down on the wrong day can run out of power or go silent. Light there is that unforgiving: in March 2025 the lander Athena came down on its side in a cold crater where its solar panels could not catch the low Sun, and its 10-day mission ended in less than 13 hours.
 
-Those Earth-in-view hours are also when the lander can take orders straight from Earth. So moonseal makes sure only its own team can give them: each command carries a signature NIST standardized to resist quantum computers, and a program on Solana's test network refuses forged or replayed commands, in public.
-
-It matters because landers are heading to the south pole for the water ice its craters may hold, and there the Sun and Earth skim the horizon: the wrong ridge or the wrong hour means no power or no radio.
+What it does: pick any spot near the pole and how long the mission stays. moonseal checks every hour of 2026 and 2027 against the real terrain, using NASA's JPL Horizons and LRO LOLA data, and marks in green the good days to land. Then it guards the lander's commands: each one is signed with NIST's new signature standard, built to resist even future quantum computers, and checked in public on Solana's test network, so a changed, forged or replayed command is refused.
 
 ## How moonseal meets the challenge
 

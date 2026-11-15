@@ -107,6 +107,7 @@ button { font: inherit; color: inherit; }
 }
 #hero h1 .sun { color: var(--sun); }
 #hero h1 .earth { color: var(--earth); }
+#hero h1 .good { color: var(--good); }
 #hero p.lede { margin: 0 0 26px; color: #d2d2d7; font-size: clamp(1.02rem, 1.35vw, 1.25rem); line-height: 1.45; letter-spacing: -0.005em; max-width: 30em; text-shadow: 0 1px 18px rgba(0,0,0,.8); }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }
 .chip {

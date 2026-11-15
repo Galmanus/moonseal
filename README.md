@@ -1,8 +1,10 @@
 # moonseal
 
-**Land in the light. Stay in command.**
+**Land on the right day. Keep control of your lander.**
 
-moonseal shows, hour by hour through 2026 and 2027, when a landing site at the Moon's south pole gives a lander sunlight to charge and Earth in view to call home, from NASA JPL Horizons and LRO LOLA data. Those are also the hours it can hear Earth directly, so moonseal makes sure only its own team can command it: each command carries a signature designed to resist quantum computers, and a program on Solana's test network refuses forged or replayed ones.
+moonseal helps a mission to the Moon's south pole twice. Before landing, it shows which days a lander will have sunlight for power and a clear line to Earth for radio, hour by hour through 2026 and 2027, from NASA JPL Horizons and LRO LOLA data. After landing, it makes sure nobody can hijack it. Every command carries a signature designed to resist quantum computers, and a program on Solana's test network refuses forged or replayed ones.
+
+Why: at the south pole the Sun barely rises and Earth hides behind the mountains, so a lander that touches down on the wrong day can run out of power or go silent.
 
 NASA Space Apps Challenge 2026 · Challenge #11, Lunar Landing Site Navigator · Florianópolis, Brazil
 
@@ -12,9 +14,9 @@ NASA Space Apps Challenge 2026 · Challenge #11, Lunar Landing Site Navigator ·
 
 ## What it does
 
-- **Shows when a lander can charge and call home.** Pick a curated site or tap any point on the Moon, choose how long to stay, and moonseal marks every good time to land in 2026 and 2027: the hours when the Sun and Earth clear the real skyline, without gaps longer than your lander can handle. It works from JPL Horizons and LOLA data, entirely in your browser.
+- **Shows the good days to land.** Pick a curated site or tap any point on the Moon, choose how long to stay, and moonseal marks every good time to land in 2026 and 2027: the hours when the Sun and Earth clear the real skyline, without gaps longer than your lander can handle. It works from JPL Horizons and LOLA data, entirely in your browser.
 - **Gives each site a field guide.** Conditions (sunlight, Earth in view, longest night, slope, surface gravity), geology, comparisons with places on Earth, and LRO images of the site, each with its source.
-- **Keeps the commands yours.** A command reaches the lander only while Earth is in view. It is signed so no one else can forge it, with ML-DSA-65 (NIST FIPS 204, designed to resist quantum computers), and sealed so only the lander can read it, with ML-KEM-768 (FIPS 203). In the browser, or natively in an Android app.
+- **Makes sure nobody can hijack the lander.** A command reaches the lander only while Earth is in view. It is signed so no one else can forge it, with ML-DSA-65 (NIST FIPS 204, designed to resist quantum computers), and sealed so only the lander can read it, with ML-KEM-768 (FIPS 203). In the browser, or natively in an Android app.
 - **Lets the base decide, in public, who may command it.** A program on Solana checks the signature, then the base's list of authorized keys and a replay counter. A valid signature from a key that is not on the list is refused on chain, and the refusal is a public record. It runs on Solana devnet, the test network.
 
 ## Try it

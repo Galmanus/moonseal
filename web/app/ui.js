@@ -109,9 +109,9 @@
   function hero() {
     // one obvious first step (the headline site, NASA's Connecting Ridge), then the two other ways in
     $('#heroChips').innerHTML =
-      '<button class="chip primary" id="heroGo">Show me when to land ›</button>' +
+      '<button class="chip primary" id="heroGo">Good days to land ›</button>' +
       '<button class="chip" id="heroAll">All landing sites</button>' +
-      '<button class="chip pqchip" id="heroCmd"><span class="pq-dot"></span>Command the lander</button>';
+      '<button class="chip pqchip" id="heroCmd"><span class="pq-dot"></span>Try to hijack a lander</button>';
     $('#heroWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };   // the one entry to the sheet
     $('#heroChips').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
@@ -189,7 +189,7 @@
         '<div class="cap">' + (s.terrain ? 'The grey line is the real horizon seen from this spot, from NASA LOLA terrain. The Sun or Earth is up when it clears that line.' : 'Outside the south-pole terrain map: this site uses a flat horizon.') + '</div></div>' +
       '<div class="sect"><h3>Other sites, same dates</h3><div class="cmp-list" id="cmp"></div></div>' +
       moondaoCard(s) +
-      '<button class="btn wide pq" id="cmdOpen"><span class="pq-dot"></span>Command this lander</button>' +
+      '<button class="btn wide pq" id="cmdOpen"><span class="pq-dot"></span>Try to hijack this lander</button>' +
       '<details class="more"><summary>More details</summary>' +
         '<div class="sect"><h3 id="nowHead">Right now</h3><div class="cards">' +
           '<div class="card sun" id="cSun"><div class="k"><i></i>Sun</div><div class="v num" id="sunEl">…</div><div class="s" id="sunTxt">…</div><div class="s dim" id="sunSub"></div></div>' +
@@ -640,7 +640,7 @@
   /* ---------------------------------------------------------------- about */
   function openAbout() {
     $('#aboutBody').innerHTML =
-      '<h2 id="aboutTitle">How moonseal works</h2><p>moonseal answers two questions for a lander at the Moon’s south pole. When does it have sunlight to charge and Earth in view to call home? And how do you make sure only its own team can command it? Everything you see is computed from public NASA data; nothing is hand-drawn or AI-generated.</p>' +
+      '<h2 id="aboutTitle">How moonseal works</h2><p>moonseal helps a mission to the Moon’s south pole twice. Before landing, it shows which days a lander will have sunlight for power and a clear line to Earth for radio. After landing, it makes sure nobody can hijack it. Everything you see is computed from public NASA data; nothing is hand-drawn or AI-generated.</p>' +
       '<h4>Sun and Earth positions</h4><p>JPL Horizons (DE441) gives the sub-solar and sub-Earth points on the Moon, hourly, 2026–2027, in the same Moon-fixed frame as the LOLA terrain. Your browser turns them into azimuth and elevation for any site, including Earth’s parallax and the Moon’s libration. Checked against direct Horizons queries at 4 sites, every hour of 2026 (8,761 h each): elevation error at most <b>0.0007°</b>; Earth azimuth at most 0.006°.</p>' +
       '<h4>The skyline</h4><p>LOLA <code>LDEM_75S_240M</code> (240 m/pixel). For each site the horizon is ray-cast over 360° (three rays per degree through the continuous surface, plus every DEM pixel binned by azimuth) with the Moon’s curvature, so a high ridge sees past the edge of the sphere: its horizon dips below 0°. There is no atmosphere, so no refraction. A body is “up” when its centre clears the skyline.</p>' +
       '<h4>Checks we ran</h4><ul>' +
@@ -649,7 +649,7 @@
         '<li>The engine has tests (<code>core/tests</code>), including one that caught a skyline too low on steep slopes; that bug is fixed.</li></ul>' +
       '<h4>The picture</h4><p>Global color: LRO LROC WAC mosaic (NASA SVS CGI Moon Kit, 8K). Global relief: LOLA <code>ldem_16</code>. The south-pole cap is real LOLA geometry; its shadows are ray-marched toward the real Sun on the selected date, with a penumbra the width of the true solar disk (0.53°). The Sun + Earth map runs the same horizon test for every pixel. In “Stand here”, Earth (NASA Blue Marble) and the Sun are drawn at their true size and position; Earth’s phase is real, but which continents face the Moon comes from a low-precision formula and is only illustrative.</p>' +
       '<h4>What this is not</h4><ul><li>Not a NASA product, and not flight-qualified. 240 m terrain misses boulders and local slopes; site results are for the point given.</li><li>“Up” means line of sight, not a closed link budget: antenna masks, DSN scheduling and relays are out of scope.</li><li>Malapert’s near-continuous Earth view rests on a thin margin (+0.10° at its worst hour in 2026).</li></ul>' +
-      '<h4>Keeping the commands yours</h4><p>Each command is signed so no one else can forge it, with a signature designed to hold even against future quantum computers, and a program on Solana checks the sender against the base’s list. In detail: commands are signed with <b>ML-DSA-65</b> (FIPS 204) and encrypted with <b>ML-KEM-768</b> (FIPS 203), in your browser (@noble/post-quantum 0.7.1) or natively in an Android app (BouncyCastle 1.81); signatures interoperate both ways. A Solana program verifies ML-DSA-65 <b>on chain</b>: a key and signature do not fit one transaction and one verification costs about 3.4M compute units, so, like our Vineland STARK verifier, the data is written into a buffer account in chunks and verified in stages, each transaction under 1.4M units (11–12 transactions in total). Tested in the Solana VM, on a local validator and live on Solana devnet (<a href="https://explorer.solana.com/address/3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7?cluster=devnet" target="_blank" rel="noopener">program on Explorer</a>); tampered signatures are rejected.</p>' +
+      '<h4>Why nobody can hijack it</h4><p>Each command is signed so no one else can forge it, with a signature designed to hold even against future quantum computers, and a program on Solana checks the sender against the base’s list. In detail: commands are signed with <b>ML-DSA-65</b> (FIPS 204) and encrypted with <b>ML-KEM-768</b> (FIPS 203), in your browser (@noble/post-quantum 0.7.1) or natively in an Android app (BouncyCastle 1.81); signatures interoperate both ways. A Solana program verifies ML-DSA-65 <b>on chain</b>: a key and signature do not fit one transaction and one verification costs about 3.4M compute units, so, like our Vineland STARK verifier, the data is written into a buffer account in chunks and verified in stages, each transaction under 1.4M units (11–12 transactions in total). Tested in the Solana VM, on a local validator and live on Solana devnet (<a href="https://explorer.solana.com/address/3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7?cluster=devnet" target="_blank" rel="noopener">program on Explorer</a>); tampered signatures are rejected.</p>' +
       '<h4>MoonDAO</h4><p>Moon Base Zero, MoonDAO’s open-source base on the Shackleton–de Gerlache connecting ridge, is included as a site at its exact centre. Their scene runs the Sun on phases without dates; moonseal maps the real Sun and Earth onto it for any hour of 2026–2027. Not affiliated with or endorsed by MoonDAO.</p>' +
       '<h4>Open source</h4><p>MIT license. The pipeline (<code>core/</code>) rebuilds every number and texture from the NASA sources; the on-chain verifier is in <code>tools/mldsa-onchain</code>. <a href="index.html" style="color:var(--earth)">The earlier command console</a> lives on a separate page.</p>' +
       '<button class="btn" id="aboutClose" style="margin-top:12px">Close</button>';

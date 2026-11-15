@@ -237,6 +237,38 @@ button { font: inherit; color: inherit; }
 #maplegend { position: fixed; z-index: 15; right: 12px; top: 76px; border-radius: 16px; padding: 10px 12px; font-size: .78rem; display: none; }
 #maplegend .lg { display: flex; align-items: center; gap: 7px; margin: 3px 0; color: var(--fg2); }
 #maplegend .lg i { width: 12px; height: 12px; border-radius: 3px; }
+#maplegend .lg-h { font-size: .68rem; letter-spacing: .07em; text-transform: uppercase; color: var(--fg3); font-weight: 600; margin-bottom: 5px; }
+
+/* ---------- simple first: the site panel opens on its answer (ui.js renderPanel) ---------- */
+.answer { margin-top: 14px; }
+.answer .verdict { margin-top: 0; padding: 13px 14px; }
+.answer .verdict .pill { font-size: .78rem; }
+.answer .verdict p { font-size: .92rem; }
+.presets .pl { align-self: center; color: var(--fg2); font-size: .82rem; margin-right: 4px; }
+.answer .presets { margin-top: 12px; }
+.answer .presets button { font-size: .82rem; padding: 6px 12px; }
+.answer .hint { margin: 10px 2px 0; color: var(--fg2); font-size: .8125rem; line-height: 1.45; }
+.answer .hint b { color: var(--good); font-weight: 600; }
+details.more { margin-top: 18px; border-top: 1px solid var(--hair); padding-top: 12px; }
+details.more > summary { cursor: pointer; color: var(--fg2); font-size: .9rem; font-weight: 600; padding: 4px 0; }
+details.more > summary:hover { color: var(--fg); }
+#dockPhase.landing.nogood { color: var(--warn); }
+
+/* the header's icon buttons say what they are when there is room */
+.icon-btn .ib-l { display: none; }
+@media (min-width: 1180px) {
+  .icon-btn:has(.ib-l) { width: auto; padding: 0 12px 0 10px; display: inline-flex; align-items: center; gap: 7px; }
+  .icon-btn .ib-l { display: inline; font-size: .85rem; font-weight: 500; }
+}
+
+/* a laptop screen is short: the opening text must fit between the bar and the dock, never under them */
+#hero { justify-content: safe center; }
+@media (max-height: 820px) and (min-width: 821px) {
+  #hero h1 { font-size: clamp(2.2rem, 4.2vw, 3.5rem); margin: 10px 0 12px; }
+  #hero p.lede { margin-bottom: 16px; font-size: 1.02rem; }
+  .why-teaser { margin-bottom: 14px; }
+  .hero-foot { margin-top: 14px; }
+}
 
 /* ---------- about sheet ---------- */
 #about { position: fixed; z-index: 50; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.45); }

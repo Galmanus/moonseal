@@ -18,22 +18,21 @@
   <div class="brand"><img class="brand-mark" src="app/brand/moonseal-mark.svg" alt="" width="30" height="30">moonseal <small>· south pole · post-quantum</small></div>
   <nav class="seg" aria-label="View">
     <button data-view="hero" aria-pressed="true">Moon</button>
-    <button data-view="earth" aria-pressed="false" title="The Moon as seen from Earth: watch the south pole tip toward and away (libration)">From Earth</button>
     <button data-view="pole" aria-pressed="false">South Pole</button>
     <button data-view="site" aria-pressed="false">Site</button>
     <button data-view="command" aria-pressed="false" title="Post-quantum command to the lander, gated by line of sight">Command</button>
   </nav>
   <button class="when-chip" id="whenBtn" aria-label="Change date and time"><span class="dot"></span><span id="whenTxt" class="num">…</span></button>
-  <button class="icon-btn" id="mapBtn" title="Map: where the Sun and Earth are above the horizon" aria-pressed="false">◐</button>
-  <button class="icon-btn" id="sitesBtn" title="All landing sites">☰</button>
-  <button class="icon-btn" id="aboutBtn" title="How this works">i</button>
+  <button class="icon-btn" id="mapBtn" title="Map: where the Sun and Earth are above the horizon" aria-pressed="false"><span aria-hidden="true">◐</span><span class="ib-l">Map</span></button>
+  <button class="icon-btn" id="sitesBtn" title="All landing sites"><span aria-hidden="true">☰</span><span class="ib-l">Sites</span></button>
+  <button class="icon-btn" id="aboutBtn" title="How this works"><span aria-hidden="true">i</span><span class="ib-l">Help</span></button>
   <input type="datetime-local" id="whenInput" step="3600" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">
 </header>
 
 <section id="hero" aria-labelledby="heroTitle">
   <div class="eyebrow">NASA Space Apps 2026 · Lunar Landing Site Navigator</div>
   <h1 id="heroTitle">Land where the <span class="sun">Sun</span> stays up and <span class="earth">Earth</span> stays in view.</h1>
-  <p class="lede">At the Moon’s south pole the Sun skims the horizon and Earth bobs in and out of sight. Pick a site and a date to see power and direct-to-Earth contact, computed from real NASA ephemeris and terrain. Then command it with a post-quantum seal: signed on a Solana Seeker, verified by a Solana program.</p>
+  <p class="lede">At the Moon’s south pole the Sun barely rises and Earth slips in and out of view. Pick a landing site and moonseal shows, hour by hour, when a lander there gets sunlight for power and sees Earth for radio, from real NASA data. Then send it a command with a post-quantum signature.</p>
   <button class="why-teaser" id="heroWhy" type="button" aria-haspopup="dialog">
     <svg class="wt-art" viewBox="0 0 46 46" aria-hidden="true">
       <rect x=".5" y=".5" width="45" height="45" rx="12" fill="rgba(12,14,20,.6)" stroke="rgba(255,179,64,.35)"/>
@@ -60,10 +59,11 @@
 </div>
 
 <div id="maplegend" class="glass">
-  <div class="lg"><i style="background:#6dffa0"></i>Sun and Earth both up</div>
-  <div class="lg"><i style="background:#ffa030"></i>Sun only (power, no Earth link)</div>
-  <div class="lg"><i style="background:#3a86ff"></i>Earth only (link, no power)</div>
-  <div class="lg"><i style="background:#0b0d12;border:1px solid #333"></i>Neither</div>
+  <div class="lg-h">On the map, right now</div>
+  <div class="lg"><i style="background:#6dffa0"></i>Sunlight and Earth in view: best</div>
+  <div class="lg"><i style="background:#ffa030"></i>Sunlight only: power, no radio</div>
+  <div class="lg"><i style="background:#3a86ff"></i>Earth only: radio, no power</div>
+  <div class="lg"><i style="background:#0b0d12;border:1px solid #333"></i>Neither: dark, no radio</div>
 </div>
 
 <footer id="dock" class="glass">
@@ -73,7 +73,7 @@
       <div class="date num" id="dockDate">…</div>
       <div class="phase" id="dockPhase">…</div>
     </div>
-    <div class="legend" id="tlLegend"><span><i style="background:var(--sun)"></i>Sun up</span><span><i style="background:var(--earth)"></i>Earth in view</span><span class="tl-landing" title="Green columns: start times from which a landing of the chosen stay keeps power (every night shorter than the battery) and Earth contact (every blackout shorter than your limit). Set the stay and limits in the site panel."><i style="background:var(--good)"></i>Landing possible</span></div>
+    <div class="legend" id="tlLegend"><span><i style="background:var(--sun)"></i>Sunlight</span><span><i style="background:var(--earth)"></i>Earth in view</span><span class="tl-landing" title="Green columns: start times from which a landing of the chosen stay keeps power (every night shorter than the battery) and Earth contact (every blackout shorter than your limit). Set the stay in the site panel."><i style="background:var(--good)"></i>Good time to land</span></div>
     <div class="speed" role="group" aria-label="Playback speed">
       <button data-speed="6">6 h/s</button><button data-speed="24" aria-pressed="true">1 day/s</button><button data-speed="168">1 wk/s</button>
     </div>

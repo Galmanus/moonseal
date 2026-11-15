@@ -99,28 +99,25 @@
     $('#whenTxt').textContent = dateStr(state.t);
     $('#dockDate').textContent = dateStr(state.t);
     $('#heroWhen').textContent = dateStr(state.t);
-    var inf = Globe.info();
-    $('#dockPhase').textContent = 'Moon seen from Earth ' + pct(inf.moonIllum) + ' lit · Earth seen from the Moon ' + pct(inf.earthIllum) + ' lit';
+    // with a site open the timeline writes this line (updateLandingLegend); without one it says what to do
+    if (!state.site) $('#dockPhase').textContent = 'Pick a landing site to see when a lander can work there';
     if (state.site) updateSiteLive();
     drawTimeline();
   }
 
   /* ---------------------------------------------------------------- hero */
   function hero() {
-    var picks = ['moon_base_zero', 'malapert_massif', 'de_gerlache_rim2'];
-    var html = picks.map(function (id) {
-      var s = SITES.find(function (x) { return x.id === id; });
-      return s ? '<button class="chip" data-site="' + s.id + '">' + esc(s.name) + '</button>' : '';
-    }).join('');
-    html += '<button class="chip primary" id="heroAll">All landing sites</button>';
-    html += '<button class="chip pqchip" id="heroCmd"><span class="pq-dot"></span>Post-quantum command</button>';
-    $('#heroChips').innerHTML = html;
+    // one obvious first step (the headline site, NASA's Connecting Ridge), then the two other ways in
+    $('#heroChips').innerHTML =
+      '<button class="chip primary" id="heroGo">Show me when to land ›</button>' +
+      '<button class="chip" id="heroAll">All landing sites</button>' +
+      '<button class="chip pqchip" id="heroCmd"><span class="pq-dot"></span>Post-quantum command</button>';
     $('#heroWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };   // the one entry to the sheet
     $('#heroChips').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       if (b.id === 'heroAll') return openPicker();
       if (b.id === 'heroCmd') return window.Command && Command.open();
-      selectSite(SITES.find(function (x) { return x.id === b.dataset.site; }));
+      if (b.id === 'heroGo') selectSite(SITES.find(function (x) { return x.id === 'connecting_ridge'; }));
     });
   }
   function showHero(on) {
@@ -178,30 +175,35 @@
     $('#panelBody').innerHTML =
       '<div class="ph"><div><h2>' + esc(s.name) + '</h2><div class="sub num">' + meta.join(' · ') + '</div>' +
       '<span class="tag">' + esc(s.group || '') + '</span></div><button class="icon-btn close" id="closeSite" aria-label="Close">✕</button></div>' +
-      moondaoCard(s) +
-      '<div class="sect"><h3 id="nowHead">Right now</h3><div class="cards">' +
-        '<div class="card sun" id="cSun"><div class="k"><i></i>Sun</div><div class="v num" id="sunEl">…</div><div class="s" id="sunTxt">…</div><div class="s dim" id="sunSub"></div></div>' +
-        '<div class="card earth" id="cEarth"><div class="k"><i></i>Earth</div><div class="v num" id="earEl">…</div><div class="s" id="earTxt">…</div><div class="s dim" id="earSub"></div></div>' +
-      '</div></div>' +
-      '<div class="sect"><h3 style="display:flex;align-items:center">The view from the site' + (s.terrain ? '<button class="btn" id="standBtn" style="margin-left:auto;padding:6px 11px;font-size:.78rem;text-transform:none;letter-spacing:0">Stand here</button>' : '') + '</h3><canvas id="skyline"></canvas>' +
-        '<div class="cap">' + (s.terrain ? 'The jagged line is the real skyline, ray-cast from NASA LOLA terrain. The Sun or Earth counts as up when its centre clears it.' : 'Outside the south-pole terrain map: this site uses the bare-sphere horizon.') + '</div></div>' +
-      (window.FieldGuide ? FieldGuide.html(s) : '') +
-      '<div class="sect"><h3>If you land at the selected time</h3>' +
-        '<div class="mission-row"><label>Stay</label><span class="stepper"><button data-dur="-1" aria-label="Shorter">−</button><span class="num" id="durTxt"></span><button data-dur="1" aria-label="Longer">+</button></span></div>' +
-        '<div class="presets" id="presets"><button data-d="7">1 week</button><button data-d="14">1 lunar day · 14 d</button><button data-d="60">2 months</button></div>' +
-        '<div class="meter"><div class="row"><span>Sunlight</span><b class="num" id="mSun"></b></div><div class="bar sun"><span id="bSun"></span></div></div>' +
-        '<div class="meter"><div class="row"><span>Earth in view</span><b class="num" id="mEar"></b></div><div class="bar earth"><span id="bEar"></span></div></div>' +
-        '<div class="facts"><div class="fact"><div class="fk">Longest darkness</div><div class="fv num" id="fDark"></div></div><div class="fact"><div class="fk">Longest Earth blackout</div><div class="fv num" id="fBlack"></div></div></div>' +
+      // the answer comes first, in plain words: can a lander that lands at the selected time work here, and when
+      // is the next good time. Everything technical waits under "More details".
+      '<div class="sect answer">' +
         '<div class="verdict" id="verdict"><span class="pill" id="vPill"></span><p id="vTxt"></p></div>' +
-        '<details style="margin-top:10px"><summary style="cursor:pointer;color:var(--fg2);font-size:.85rem">Mission limits</summary>' +
+        '<div class="presets" id="presets" role="group" aria-label="How long the lander stays"><span class="pl">Stay</span><button data-d="7">1 week</button><button data-d="14">2 weeks</button><button data-d="60">2 months</button></div>' +
+        '<div class="meter"><div class="row"><span>Sunlight during the stay (power)</span><b class="num" id="mSun"></b></div><div class="bar sun"><span id="bSun"></span></div></div>' +
+        '<div class="meter"><div class="row"><span>Earth in view during the stay (radio)</span><b class="num" id="mEar"></b></div><div class="bar earth"><span id="bEar"></span></div></div>' +
+        '<button class="btn wide light" id="nextGood">Find the next good time to land</button>' +
+        '<p class="hint">On the timeline below, <b>green</b> marks every good time to land. Press ▶ to watch the Sun and Earth move.</p>' +
+      '</div>' +
+      '<div class="sect"><h3 style="display:flex;align-items:center">The view from the site' + (s.terrain ? '<button class="btn" id="standBtn" style="margin-left:auto;padding:6px 11px;font-size:.78rem;text-transform:none;letter-spacing:0">Stand here</button>' : '') + '</h3><canvas id="skyline"></canvas>' +
+        '<div class="cap">' + (s.terrain ? 'The grey line is the real horizon seen from this spot, from NASA LOLA terrain. The Sun or Earth is up when it clears that line.' : 'Outside the south-pole terrain map: this site uses a flat horizon.') + '</div></div>' +
+      '<div class="sect"><h3>Other sites, same dates</h3><div class="cmp-list" id="cmp"></div></div>' +
+      moondaoCard(s) +
+      '<button class="btn wide pq" id="cmdOpen"><span class="pq-dot"></span>Command this lander · post-quantum</button>' +
+      '<details class="more"><summary>More details</summary>' +
+        '<div class="sect"><h3 id="nowHead">Right now</h3><div class="cards">' +
+          '<div class="card sun" id="cSun"><div class="k"><i></i>Sun</div><div class="v num" id="sunEl">…</div><div class="s" id="sunTxt">…</div><div class="s dim" id="sunSub"></div></div>' +
+          '<div class="card earth" id="cEarth"><div class="k"><i></i>Earth</div><div class="v num" id="earEl">…</div><div class="s" id="earTxt">…</div><div class="s dim" id="earSub"></div></div>' +
+        '</div></div>' +
+        '<div class="sect"><h3>Stay and mission limits</h3>' +
+          '<div class="mission-row"><label>Stay</label><span class="stepper"><button data-dur="-1" aria-label="Shorter">−</button><span class="num" id="durTxt"></span><button data-dur="1" aria-label="Longer">+</button></span></div>' +
+          '<div class="facts"><div class="fact"><div class="fk">Longest darkness</div><div class="fv num" id="fDark"></div></div><div class="fact"><div class="fk">Longest Earth blackout</div><div class="fv num" id="fBlack"></div></div></div>' +
           '<div class="mission-row" style="margin-top:10px"><label style="min-width:150px">Battery rides out darkness up to</label><span class="stepper"><button data-batt="-6">−</button><span class="num" id="battTxt"></span><button data-batt="6">+</button></span></div>' +
           '<div class="mission-row" style="margin-top:8px"><label style="min-width:150px">Can wait for Earth up to</label><span class="stepper"><button data-gap="-6">−</button><span class="num" id="gapTxt"></span><button data-gap="6">+</button></span></div>' +
-        '</details>' +
-        '<button class="btn wide light" id="nextGood">Find the next good day to land</button>' +
-        '<button class="btn wide pq" id="cmdOpen"><span class="pq-dot"></span>Command this lander · post-quantum</button>' +
-      '</div>' +
-      '<div class="sect"><h3>Compare sites for the same landing</h3><div class="cmp-list" id="cmp"></div></div>' +
-      '<div class="cap" style="margin-top:14px">' + src + '</div>';
+        '</div>' +
+        (window.FieldGuide ? FieldGuide.html(s) : '') +
+        '<div class="cap" style="margin-top:14px">' + src + '</div>' +
+      '</details>';
     $('#closeSite').onclick = closeSite;
     if (window.FieldGuide) FieldGuide.mount($('#panelBody'), s);
     var tm = $('#toMbz'); if (tm) tm.onclick = function () { selectSite(SITES.find(function (x) { return x.id === 'moon_base_zero'; })); };
@@ -257,13 +259,13 @@
     $('#fDark').textContent = ms.longestDark ? hrs(ms.longestDark) : 'none';
     $('#fBlack').textContent = ms.longestBlackout ? hrs(ms.longestBlackout) : 'none';
     var vEl = $('#verdict'); vEl.className = 'verdict ' + v.level;
-    $('#vPill').textContent = v.level === 'good' ? 'GOOD' : v.level === 'warn' ? 'RISKY' : 'NO-GO';
+    $('#vPill').textContent = v.level === 'good' ? 'Good time to land' : v.level === 'warn' ? 'Risky' : 'Not a good time';
     var why = [];
-    if (!v.power) why.push('a ' + hrs(ms.longestDark) + ' night outlasts the ' + state.need.battH + ' h battery');
-    if (!v.comm) why.push('Earth disappears for ' + hrs(ms.longestBlackout) + ', longer than the ' + state.need.gapH + ' h you can wait');
+    if (!v.power) why.push('the longest night, ' + hrs(ms.longestDark) + ', outlasts the ' + state.need.battH + ' h battery');
+    if (!v.comm) why.push('Earth stays out of view for ' + hrs(ms.longestBlackout) + ', longer than the ' + state.need.gapH + ' h the mission can wait');
     $('#vTxt').textContent = (v.level === 'good'
-      ? 'Landing on ' + dayStr(t) + ' for ' + state.durD + ' days keeps power and Earth contact inside your limits.'
-      : 'Landing on ' + dayStr(t) + ': ' + why.join('; ') + '.') + (ms.truncated ? ' (Ephemeris ends 1 Jan 2028.)' : '');
+      ? 'Land on ' + dayStr(t) + ' and stay ' + state.durD + ' days: the lander keeps power and can radio Earth.'
+      : 'Land on ' + dayStr(t) + ' and stay ' + state.durD + ' days: ' + why.join('; ') + '.') + (ms.truncated ? ' (The data ends 1 Jan 2028.)' : '');
     drawSkyline(a);
     updateCompare();
   }
@@ -285,9 +287,9 @@
   function findNextGood() {
     var g = Model.goodStarts(state.model, state.durD * 24, state.need);
     var i = Model.nextGood(g, state.t + 1);
-    if (i == null) { toast('No good start before 2028 with these limits. Try a shorter stay or a bigger battery.'); return; }
+    if (i == null) { toast('No good time to land before 2028 for this stay. Try a shorter stay.'); return; }
     animateTime(i);
-    toast('Next good landing: ' + dateStr(i));
+    toast('Next good time to land: ' + dateStr(i));
   }
 
   /* ---------------------------------------------------------------- skyline */
@@ -402,16 +404,15 @@
   }
   function updateLandingLegend() {
     var el = $('#dockPhase'), segs = landingSegs();
-    if (!segs) { el.classList.remove('landing'); return; }   // no site: the dock keeps the Moon/Earth phase line
-    var name = state.site.id === 'pin' ? 'this point' : state.site.name, txt;
-    if (!segs.length) txt = 'Landing possible at ' + name + ': never in 2026-2027 for a ' + state.durD + '-day stay';
-    else {
-      var cur = null;
-      for (var i = 0; i < segs.length; i++) if (segs[i][1] > state.t) { cur = segs[i]; break; }
-      txt = 'Landing possible at ' + name + ': ' + segs.length + ' window' + (segs.length > 1 ? 's' : '') +
-        (!cur ? ', none left after this date' : cur[0] <= state.t ? ', one open now' : ', next ' + dayStr(cur[0]));
-    }
+    if (!segs) { el.classList.remove('landing', 'nogood'); return; }   // no site: the dock keeps its hint line
+    var txt, cur = null;                  // the site's name is already on the panel: keep this line short
+    for (var i = 0; i < segs.length; i++) if (segs[i][1] > state.t) { cur = segs[i]; break; }
+    var count = ' · ' + segs.length + ' window' + (segs.length > 1 ? 's' : '') + ' in 2026-2027';
+    if (!segs.length) txt = 'No good time to land here in 2026-2027 for a ' + state.durD + '-day stay';
+    else if (!cur) txt = 'No good time to land after this date' + count;
+    else txt = (cur[0] <= state.t ? 'Good time to land: now' : 'Next good time to land: ' + dayStr(cur[0])) + count;
     el.classList.add('landing');
+    el.classList.toggle('nogood', !cur);
     if (el.textContent !== txt) el.textContent = txt;
   }
   function drawStrips() {

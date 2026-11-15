@@ -20,7 +20,7 @@ NSSDC = "https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html"
 SITES = [
     # the four engine sites; coordinates as cited in core/lola_horizon.py (sources not re-fetched this session)
     dict(id="connecting_ridge", name="Connecting Ridge", group=ART, lat=-89.45, lon=222.69,
-         source="MoonDAO Moon Base Zero site (89.45 S, 137.31 W) per docs/moondao.md; URL not recorded in repo",
+         source="Point 89.45 S, 137.31 W on the Connecting Ridge, rounded from the Moon Base Zero location MoonDAO gives",
          note="Shackleton-de Gerlache connecting ridge"),
     dict(id="malapert_massif", name="Malapert Massif", group=ART, lat=-85.964, lon=357.681,
          source="Kring 2025, JGR Planets 2024JE008905 (NASA notional site), per core/lola_horizon.py; not re-verified",

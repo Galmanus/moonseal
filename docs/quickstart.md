@@ -16,9 +16,9 @@ Open <http://127.0.0.1:8787/app.html>. Serve the folder over HTTP: opening `app.
 
 What to try first:
 
-1. **Moon** shows the Moon lit by the real Sun for the selected date. Drag the timeline at the bottom, or press the date chip at the top, to move through 2026 and 2027. The **◐** button paints where the Sun and Earth are above the horizon.
-2. **South Pole** and **Site** show the LOLA terrain with ray-marched shadows. Pick Connecting Ridge, then **Stand here** for the skyline with the Sun and Earth on it.
-3. **From Earth** shows the Moon as seen from Earth, with the south pole tipping toward and away from you (libration).
+1. **Show me when to land** opens Connecting Ridge. The site panel starts with the answer: whether landing at the selected time works for the chosen stay, how much of the stay has sunlight (power) and Earth in view (radio), and **Find the next good time to land**. Green columns on the timeline mark every good time to land in 2026 and 2027. Angles, the field guide and the mission limits are under **More details**.
+2. **Moon** shows the Moon lit by the real Sun for the selected date. Drag the timeline at the bottom, or press the date chip at the top, to move through 2026 and 2027. **Map** paints where the Sun and Earth are above the horizon.
+3. **South Pole** and **Site** show the LOLA terrain with ray-marched shadows. On a site, **Stand here** shows the skyline with the Sun and Earth on it.
 4. On the opening screen, **Why the south pole** opens the explainer: why the south pole matters, with numbered sources.
 5. **Command** opens the post-quantum command pipeline. If Earth is below the skyline, press **Jump to the next contact window** first, then **Sign & send**.
 

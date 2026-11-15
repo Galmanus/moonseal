@@ -368,7 +368,7 @@
   function timelineSites() {
     var list = [];
     if (state.site) list.push(state.site);
-    var max = window.innerWidth <= 820 ? 3 : 5;
+    var max = window.innerWidth <= 820 ? (state.site ? 2 : 3) : 5;   // phones with the sheet open: a shorter dock
     POLE.forEach(function (s) { if (list.indexOf(s) < 0 && list.length < max) list.push(s); });
     return list;
   }
@@ -438,6 +438,7 @@
     if (!showRows) return;
     layoutTimeline();
     var dpr = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = tl.height;
+    if (!W || !H) return;                  // the dock is hidden (phone sheet at full height): nothing to draw
     if (cv.height !== Math.round(H * dpr) || cv.width !== Math.round(W * dpr)) {
       cv.style.height = H + 'px'; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); tl.stale = true;
       layoutInsets();
@@ -614,11 +615,28 @@
     var small = window.innerWidth <= 820, panelOn = !$('#panel').hidden;
     document.body.classList.toggle('site-open', panelOn);
     document.body.classList.toggle('view-hero', state.view === 'hero');
+    if (!panelOn) document.body.classList.remove('sheet-full');
     var dock = $('#dock').getBoundingClientRect();
     document.documentElement.style.setProperty('--dock-h', Math.round(dock.height) + 'px');
-    var bottom = small ? (panelOn ? Math.round(window.innerHeight * 0.52 + dock.height + 16) : 0) : Math.round(dock.height) + 12;
-    Globe.setInsets({ left: !small && panelOn ? 412 : 0, bottom: bottom, top: small ? 56 : 64 });
+    // phones: the bar has two rows (views below the brand), so the globe starts below its real bottom edge
+    var barB = small ? Math.round($('#bar').getBoundingClientRect().bottom) : 64;
+    if (small) document.documentElement.style.setProperty('--bar-b', barB + 'px');
+    var bottom = small ? (panelOn ? Math.round(window.innerHeight * 0.46 + dock.height + 16) : 0) : Math.round(dock.height) + 12;   // phones: the sheet is 46vh
+    Globe.setInsets({ left: !small && panelOn ? 412 : 0, bottom: bottom, top: small ? barB + 4 : 64 });
   }
+  // phones: the site sheet is half height, or full when you tap or swipe up its handle (swipe down to go back)
+  function setSheet(full) { document.body.classList.toggle('sheet-full', !!full); layoutInsets(); }
+  (function sheetHandle() {
+    var g = $('#panel .grab'), y0 = null;
+    if (!g) return;
+    g.addEventListener('pointerdown', function (e) { y0 = e.clientY; g.setPointerCapture(e.pointerId); });
+    g.addEventListener('pointerup', function (e) {
+      if (y0 == null) return;
+      var dy = e.clientY - y0, full = document.body.classList.contains('sheet-full'); y0 = null;
+      setSheet(dy < -24 ? true : dy > 24 ? false : !full);
+    });
+    g.addEventListener('pointercancel', function () { y0 = null; });
+  })();
 
   /* ---------------------------------------------------------------- url state */
   function saveHash() {

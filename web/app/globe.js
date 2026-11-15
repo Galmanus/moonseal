@@ -30,7 +30,18 @@ window.Globe = (function () {
   var moonIllum = 0.5, earthIllum = 0.5, trackEarth = false;
   var demFull = null;            // Float32Array km, 1906^2, for JS picking / custom horizons
   var demInner = null;           // Float32Array km, 2048^2
-  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  /* Phones and tablets get a lighter render budget: pixel ratio, shadow steps, texture sizes, load order.
+     The test is a touch-first device with no fine pointer (or very little memory), so a desktop, even in a
+     narrow window, keeps its settings. ?lite=1 / ?lite=0 forces either path. */
+  var LITE = (function () {
+    try {
+      var q = /[?&]lite=([01])/.exec(location.search);
+      if (q) return q[1] === '1';
+      var touchOnly = matchMedia('(pointer: coarse)').matches && !matchMedia('(any-pointer: fine)').matches;
+      return touchOnly || (navigator.deviceMemory != null && navigator.deviceMemory <= 2);
+    } catch (e) { return false; }
+  })();
+  var dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2);
 
   /* ------------------------------------------------------------------ shaders */
   var COMMON = [
@@ -284,6 +295,8 @@ window.Globe = (function () {
   var siteTile = null, tileCache = {}, capReadyP = null;
   function setSiteTile(id) {
     var cfg = window.MOONSEAL_TILES && id ? window.MOONSEAL_TILES[id] : null;
+    // phones: the same tile box-averaged to 1024^2 (2 MB instead of 8), so each texel covers twice the ground
+    if (cfg && LITE) cfg = Object.assign({}, cfg, { file: cfg.file.replace(/\.i16$/, '_1k.i16'), n: cfg.n / 2, texel_km: cfg.texel_km * 2 });
     return (capReadyP || Promise.resolve()).then(function () {
       if (!cfg || !capMat) {
         siteTile = null;
@@ -296,6 +309,11 @@ window.Globe = (function () {
         [capMat, sphereMat].forEach(function (m) {
           m.uniforms.uDemSite.value = d.tex; m.uniforms.uHasSite.value = 1; m.uniforms.uSiteTexel.value = cfg.texel_km;
           m.uniforms.uSiteRect.value.set(cfg.rect[0], cfg.rect[1], cfg.rect[2], cfg.rect[3]);
+        });
+        if (LITE) Object.keys(tileCache).forEach(function (k) {   // phones keep one tile in memory
+          if (k === cfg.file) return;
+          var old = tileCache[k]; delete tileCache[k];
+          old.then(function (o) { o.tex.dispose(); }).catch(function () {});
         });
         dirty = true; hqPending = true; window.__siteTile = cfg.file; return true;
       });
@@ -682,10 +700,11 @@ window.Globe = (function () {
   function quality(hq) {
     // idle frames are supersampled (>= 1.6x even on 1x screens, capped at 2x): crisper shadow edges and
     // crater detail; interaction drops to <= 1.25x so dragging and playback stay fluid
-    var pr = hq ? Math.min(2, Math.max(dpr, 1.6)) : Math.min(dpr, 1.25);
+    // phones: no supersampling, 1x while moving; fewer, longer shadow steps that reach about as far
+    var pr = LITE ? (hq ? dpr : Math.min(dpr, 1)) : (hq ? Math.min(2, Math.max(dpr, 1.6)) : Math.min(dpr, 1.25));
     if (renderer.getPixelRatio() !== pr) { renderer.setPixelRatio(pr); renderer.setSize(canvas.clientWidth, canvas.clientHeight, false); }
-    if (capMat) { capMat.uniforms.uSteps.value = hq ? 190 : 64; capMat.uniforms.uGrow.value = hq ? 1.045 : 1.095; }
-    sphereMat.uniforms.uSteps2.value = hq ? 64 : 26; sphereMat.uniforms.uGrow2.value = hq ? 1.08 : 1.2;
+    if (capMat) { capMat.uniforms.uSteps.value = LITE ? (hq ? 110 : 48) : (hq ? 190 : 64); capMat.uniforms.uGrow.value = LITE ? (hq ? 1.08 : 1.14) : (hq ? 1.045 : 1.095); }
+    sphereMat.uniforms.uSteps2.value = LITE ? (hq ? 40 : 18) : (hq ? 64 : 26); sphereMat.uniforms.uGrow2.value = LITE ? (hq ? 1.13 : 1.32) : (hq ? 1.08 : 1.2);
   }
   function frame(now) {
     requestAnimationFrame(frame);
@@ -754,19 +773,24 @@ window.Globe = (function () {
     canvas.addEventListener('wheel', onWheel, { passive: false });
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
-    var big = renderer.capabilities.maxTextureSize >= 8192 && !opt.lowres;
-    var first = Promise.all([loadTex('app/tex/moon_color_2k.jpg'), loadTex('app/tex/moon_normal_4k.webp')])
+    // phones: 4K color (not 8K: about 45 MB of GPU memory instead of 180), 2K normal and global heights, and the
+    // 15 MB of polar DEMs only after the first frame, so the first paint does not share the connection
+    var big = !LITE && renderer.capabilities.maxTextureSize >= 8192 && !opt.lowres;
+    var fourK = opt.fourK || LITE;
+    var first = Promise.all([loadTex('app/tex/moon_color_2k.jpg'), loadTex(LITE ? 'app/tex/moon_normal_2k.webp' : 'app/tex/moon_normal_4k.webp')])
       .then(function (t) {
         sphereMat.uniforms.uColor.value = t[0]; sphereMat.uniforms.uNormal.value = t[1];
         sphere.visible = true; dirty = true; hqPending = true;
       });
-    var capReady = capReadyP = loadDem('app/tex/pole_full_1906.i16', 1906).then(function (d) {
+    var capReady = capReadyP = (LITE ? first : Promise.resolve()).then(function () {
+      return loadDem('app/tex/pole_full_1906.i16', 1906);
+    }).then(function (d) {
       demFull = d.data;
       capMat = new T.ShaderMaterial({ vertexShader: CAP_VS, fragmentShader: CAP_FS, side: T.DoubleSide,
         uniforms: uni({ uColor: { value: sphereMat.uniforms.uColor.value }, uSteps: { value: 190 }, uGrow: { value: 1.045 }, uOverlay: { value: overlay } }) });
       capMat.uniforms.uDemFull.value = d.tex; capMat.uniforms.uHasDem.value = 1;
       sphereMat.uniforms.uDemFull.value = d.tex; sphereMat.uniforms.uHasDem.value = 1;
-      cap = new T.Mesh(capGeometry(opt.capGrid || 640), capMat); cap.frustumCulled = false;
+      cap = new T.Mesh(capGeometry(opt.capGrid || (LITE ? 448 : 640)), capMat); cap.frustumCulled = false;
       scene.add(cap);
       setTime(timeH); dirty = true; hqPending = true;
       return loadDem('app/tex/pole_inner_2048.i16', 2048);
@@ -777,15 +801,17 @@ window.Globe = (function () {
       dirty = true; hqPending = true;
     });
     first.then(function () {
-      if (!big && !opt.fourK) return;
+      if (!big && !fourK) return;
       return loadTex(big ? 'app/tex/moon_color_8k.jpg' : 'app/tex/moon_color_4k.jpg').then(function (t) {
         var old = sphereMat.uniforms.uColor.value;
         sphereMat.uniforms.uColor.value = t; if (capMat) capMat.uniforms.uColor.value = t;
         if (old) old.dispose(); dirty = true; hqPending = true;
       });
     }).catch(function (e) { console.warn('hi-res color', e); })
+      .then(function () { return LITE ? capReady.catch(function () {}) : null; })   // phones: the pole first
       .then(function () {                     // terminator shadows on the whole globe (LOLA ldem_16, metres)
-        return loadDem('app/tex/moon_height_4k.i16', 4096, 2048, 0.001, true).then(function (d) {
+        return (LITE ? loadDem('app/tex/moon_height_2k.i16', 2048, 1024, 0.001, true)
+                     : loadDem('app/tex/moon_height_4k.i16', 4096, 2048, 0.001, true)).then(function (d) {
           sphereMat.uniforms.uGlobH.value = d.tex; sphereMat.uniforms.uHasGlobH.value = 1;
           dirty = true; hqPending = true; window.__globShadows = true;
         });
@@ -815,6 +841,7 @@ window.Globe = (function () {
     pick: pick, project: project, on: on, info: info, demHeightKm: demHeightKm,
     dem: function () { return { full: demFull, inner: demInner }; },
     invalidate: function () { dirty = true; hqPending = true; },
+    lite: LITE,
     playing: false
   };
 })();

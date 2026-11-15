@@ -384,6 +384,36 @@
     });
     tl.rows = rows; tl.height = Math.max(64, y + 2);
   }
+  /* Landing windows of the selected site: [start, end) hour ranges where Model.goodStarts says a landing of
+     the chosen stay keeps power (nights shorter than the battery) and Earth contact (blackouts shorter than
+     the limit). Drawn as full-height columns so "when can we land?" reads at a glance. */
+  function landingSegs() {
+    if (!state.site) return null;
+    var s = state.site, key = s.id + '|' + s.lat + '|' + s.lon + '|' + state.durD + '|' + state.need.battH + '|' + state.need.gapH;
+    if (tl.segKey === key) return tl.segs;
+    var g = Model.goodStarts(Model.compute(s), state.durD * 24, state.need), segs = [], s0 = -1;
+    for (var hh = 0; hh <= g.length; hh++) {
+      var on = hh < g.length && g[hh];
+      if (on && s0 < 0) s0 = hh;
+      if (!on && s0 >= 0) { segs.push([s0, hh]); s0 = -1; }
+    }
+    tl.segKey = key; tl.segs = segs;
+    return segs;
+  }
+  function updateLandingLegend() {
+    var el = $('#dockPhase'), segs = landingSegs();
+    if (!segs) { el.classList.remove('landing'); return; }   // no site: the dock keeps the Moon/Earth phase line
+    var name = state.site.id === 'pin' ? 'this point' : state.site.name, txt;
+    if (!segs.length) txt = 'Landing possible at ' + name + ': never in 2026-2027 for a ' + state.durD + '-day stay';
+    else {
+      var cur = null;
+      for (var i = 0; i < segs.length; i++) if (segs[i][1] > state.t) { cur = segs[i]; break; }
+      txt = 'Landing possible at ' + name + ': ' + segs.length + ' window' + (segs.length > 1 ? 's' : '') +
+        (!cur ? ', none left after this date' : cur[0] <= state.t ? ', one open now' : ', next ' + dayStr(cur[0]));
+    }
+    el.classList.add('landing');
+    if (el.textContent !== txt) el.textContent = txt;
+  }
   function drawStrips() {
     var cv = tl.cv, dpr = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = tl.height;
     var off = tl.off || (tl.off = document.createElement('canvas'));
@@ -419,6 +449,20 @@
       c.save(); c.beginPath(); roundRect(c, G, r.y, SW, r.h, Math.min(3, r.h / 2)); c.clip();
       c.drawImage(tmp, 0, 0, cols, 1, G, r.y, SW, r.h); c.restore();
     });
+    // landing windows: full-height green columns with a solid cap on the axis (short ones stay 2 px wide)
+    var segs = landingSegs();
+    if (segs) {
+      var caps = [];
+      c.fillStyle = 'rgba(50,215,75,.42)';
+      segs.forEach(function (sg) {
+        if (sg[1] < v0 || sg[0] > v1) return;
+        var xa = G + (Math.max(sg[0], v0) - v0) / (v1 - v0) * SW, xb = G + (Math.min(sg[1], v1) - v0) / (v1 - v0) * SW;
+        var w = Math.max(3, xb - xa);
+        c.fillRect(xa, 14, w, H - 14); caps.push([xa, w]);
+      });
+      c.fillStyle = 'rgb(50,215,75)';
+      caps.forEach(function (p) { c.fillRect(p[0], 13, p[1], 6); });
+    }
     // labels
     var seen = {};
     tl.rows.forEach(function (r) {
@@ -437,6 +481,7 @@
     if (cv.hidden === showRows) { cv.hidden = !showRows; $('#tlLegend').hidden = !showRows; requestAnimationFrame(layoutInsets); }
     if (!showRows) return;
     layoutTimeline();
+    updateLandingLegend();
     var dpr = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = tl.height;
     if (!W || !H) return;                  // the dock is hidden (phone sheet at full height): nothing to draw
     if (cv.height !== Math.round(H * dpr) || cv.width !== Math.round(W * dpr)) {

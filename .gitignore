@@ -53,3 +53,6 @@ docs/submission-moonseal.md
 # ---- video production workspace (sources reviewed separately; renders are large) --------------
 video/
 android/PUBLISHING.md
+
+# local git worktrees
+_wt_*/

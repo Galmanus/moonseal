@@ -591,3 +591,14 @@ button { font: inherit; color: inherit; }
   .cmd-modes button { flex: 1 1 auto; min-height: 44px; }
   .cmd-sheet { width: calc(100vw - 16px); max-height: calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 20px 16px calc(18px + env(safe-area-inset-bottom)); border-radius: 22px; }
 }
+
+/* the dock's second line becomes the landing summary while a site is open (ui.js updateLandingLegend) */
+#dockPhase.landing { color: var(--good); font-weight: 600; }
+/* keep the legend and the speed buttons on one line; only the text block beside the date may wrap */
+.dock-top .legend, #dock .speed { flex-shrink: 0; }
+.legend span, #dock .speed button { white-space: nowrap; }
+.dock-top > div:first-of-type { min-width: 0; }
+/* phones hide the phase line, but the landing summary is the dock's most useful line: show it */
+@media (max-width: 820px) {
+  #dockPhase.landing { display: block; font-size: .78rem; line-height: 1.3; margin-top: 2px; }
+}

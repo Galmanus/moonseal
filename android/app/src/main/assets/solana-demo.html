@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunar Contacts · Solana</title>
+<style>
+  :root{--bg:#070b12;--panel:#101826;--panel2:#0b1220;--ink:#e9eef7;--muted:#8a97ad;--line:#1e2b42;
+    --accent:#8b7dff;--accent2:#00d6c2;--comm:#2fd27a;--bad:#ff5668;--sun:#ffb24d}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:22px 16px 60px}
+  h1{font-size:22px;margin:2px 0;font-weight:800}
+  .tag{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;word-break:break-all}
+  a{color:var(--accent2)}
+  .flow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .step{flex:1;min-width:150px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .step .n{font-weight:700;font-size:13px}
+  .step .s{font-size:12px;margin-top:4px;color:var(--muted)}
+  .step.ok{border-color:var(--comm)} .step.ok .s{color:var(--comm)}
+  .step.err{border-color:var(--bad)} .step.err .s{color:var(--bad)}
+  .step.run{border-color:var(--sun)} .step.run .s{color:var(--sun)}
+  button{border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;width:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07110f}
+  button:disabled{opacity:.5;cursor:default}
+  .log{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;max-height:260px;overflow:auto}
+  .foot{color:var(--muted);font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Lunar Contacts · Solana devnet</h1>
+  <div class="tag">decentralized direct-to-Earth ground-station coordination. the planner's contact window for <b>Moon Base Zero (Connecting Ridge)</b> is posted on-chain; a ground station claims it and confirms with the hash of the post-quantum (ML-DSA) signed command.</div>
+
+  <div class="card">
+    <div class="k">program (devnet)</div>
+    <div class="mono" id="pid">...</div>
+    <div class="k" style="margin-top:10px">demo ground-station wallet</div>
+    <div class="mono" id="wal">...</div>
+  </div>
+
+  <div class="card">
+    <div class="flow" id="flow">
+      <div class="step" id="st0"><div class="n">1 · register</div><div class="s">ground station</div></div>
+      <div class="step" id="st1"><div class="n">2 · post window</div><div class="s">contact window (planner)</div></div>
+      <div class="step" id="st2"><div class="n">3 · claim</div><div class="s">station schedules it</div></div>
+      <div class="step" id="st3"><div class="n">4 · confirm</div><div class="s">+ ML-DSA command hash</div></div>
+    </div>
+    <button id="run">run on-chain demo (devnet)</button>
+    <div class="log" id="log">ready. click to send real transactions on devnet.</div>
+    <div class="foot">real transactions on Solana devnet, signed by a throwaway demo key. each step opens on the explorer.</div>
+  </div>
+</div>
+
+<script src="solana-bundle.js"></script>
+<script src="solana-demo-config.js"></script>
+<script src="windows_data.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const C=window.LUNAR_SOLANA_DEMO, S=window.LunarSolana, D=window.LUNAR_DATA;
+const EXP=sig=>`https://explorer.solana.com/tx/${sig}?cluster=devnet`;
+$('pid').innerHTML=`<a href="https://explorer.solana.com/address/${C.programId}?cluster=devnet" target="_blank">${C.programId}</a>`;
+
+const kp=S.Keypair.fromSecretKey(new Uint8Array(C.secretKey));
+$('wal').innerHTML=`<a href="https://explorer.solana.com/address/${kp.publicKey.toBase58()}?cluster=devnet" target="_blank">${kp.publicKey.toBase58()}</a>`;
+
+const site=D.sites.find(s=>s.id==="connecting_ridge")||D.sites[0];
+const w0=site.comm_windows[0];
+const EPOCH0=Date.UTC(2026,1,1)/1000;
+const steps=['register_station','post_window','claim_window','confirm_contact'];
+const log=m=>{$('log').textContent+="\n"+m; $('log').scrollTop=$('log').scrollHeight;};
+
+$('run').onclick=async()=>{
+  $('run').disabled=true; $('log').textContent="starting...";
+  steps.forEach((_,i)=>{$('st'+i).className='step';});
+  const win={ id:Math.floor(Date.now()/1000),
+    startTs:Math.round(EPOCH0+w0.start_h*3600), endTs:Math.round(EPOCH0+w0.end_h*3600),
+    latE6:Math.round(site.lat*1e6), lonE6:Math.round(site.lon*1e6) };
+  log(`site: ${site.name}`); log(`contact window: ${w0.dur_h} h`);
+  let idx=0; const mark=(i,cls)=>{$('st'+i).className='step '+cls;};
+  mark(0,'run');
+  try{
+    const sigs=await S.runDemo({ url:C.rpc, keypair:kp, win, onLog:(m)=>{
+      log(m);
+      // advance the step lamps as each confirms
+      const name=m.split(/[ :]/)[0];
+      const k=steps.indexOf(name);
+      if(m.includes('✓') && k>=0){ mark(k,'ok'); if(k+1<4) mark(k+1,'run'); }
+      if(m.includes('already registered')){ mark(0,'ok'); mark(1,'run'); }
+    }});
+    // render explorer links from returned sigs
+    log("\n--- explorer ---");
+    for(const [k,v] of Object.entries(sigs)){
+      const i=steps.indexOf(k); if(i>=0){ mark(i,'ok'); const s=$('st'+i).querySelector('.s'); s.innerHTML=`<a href="${EXP(v)}" target="_blank">tx ↗</a>`; }
+      log(`${k}: ${EXP(v)}`);
+    }
+    log("\ndone. command authenticated and recorded on-chain.");
+  }catch(e){
+    log("ERROR: "+(e.message||e));
+    for(let i=0;i<4;i++){ if($('st'+i).className==='step step run'){ mark(i,'err'); } }
+  }
+  $('run').disabled=false;
+};
+</script>
+</body>
+</html>

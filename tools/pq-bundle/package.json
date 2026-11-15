@@ -1,0 +1,8 @@
+{
+  "name": "lcw-pq-bundle",
+  "private": true,
+  "description": "Vendored post-quantum primitives for web/app (ML-DSA-65, ML-KEM-768). Pinned; bundled locally, no CDN.",
+  "dependencies": {
+    "@noble/post-quantum": "0.7.1"
+  }
+}

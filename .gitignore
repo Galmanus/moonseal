@@ -1,0 +1,55 @@
+# ---- secrets: never commit key material -------------------------------------------------------
+# devnet demo payer (copy web/solana-demo-config.example.js and fill in your own devnet key)
+**/solana-demo-config.js
+# Solana keypairs (program id, registry account, payers) and any other key file
+*keypair*.json
+**/keys/
+*.key
+*.jks
+*.keystore
+*.p12
+*.pem
+.env
+.env.*
+**/local.properties
+
+# ---- build outputs and dependencies (reproducible from the sources) ----------------------------
+**/node_modules/
+**/target/
+**/.gradle/
+**/build/
+*.apk
+*.aab
+*.class
+*.tar.gz
+seeker-spike/lib/
+seeker-spike/termux-bundle/
+.pytest_cache/
+__pycache__/
+*.pyc
+test-ledger/
+
+# ---- raw NASA downloads (large; URLs and regeneration steps in docs/data-sources.md) ------------
+data/moonkit_raw/
+data/lola/*.IMG
+data/pgda_raw/
+data/earth_raw/
+
+# ---- local working material, not part of the public project -----------------------------------
+_backup_*/
+.claude/
+WAKEUP.md
+docs/moondao.md
+docs/recon.md
+docs/strongest-angle.md
+docs/pitch.md
+docs/project-context.md
+docs/submission.md
+docs/demo-script.md
+docs/impact.md
+docs/problem-validation.md
+docs/submission-moonseal.md
+
+# ---- video production workspace (sources reviewed separately; renders are large) --------------
+video/
+android/PUBLISHING.md

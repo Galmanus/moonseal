@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lunar Command Window</title>
+<style>
+  :root{
+    --bg:#070b12; --panel:#101826; --panel2:#0b1220; --ink:#e9eef7; --muted:#8a97ad;
+    --line:#1e2b42; --earth:#4da3ff; --sun:#ffb24d; --comm:#2fd27a; --power:#f0a030;
+    --bad:#ff5668; --accent:#8b7dff; --accent2:#00d6c2;
+    --shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(139,125,255,.10), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(0,214,194,.08), transparent 55%), var(--bg);
+    color:var(--ink);font:15px/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:20px 16px 48px}
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  h1{font-size:23px;margin:2px 0;letter-spacing:.3px;font-weight:800}
+  .tag{color:var(--muted);font-size:13px}
+  .mode{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .mode.dev{color:var(--sun);border-color:rgba(240,160,48,.4)}
+  .mode.device{color:var(--comm);border-color:rgba(47,210,122,.4)}
+  .sites{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 12px}
+  .site{background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:9px 12px;
+    border-radius:10px;cursor:pointer;font-size:13px;transition:.15s}
+  .site:hover{border-color:var(--accent)}
+  .site.active{background:var(--accent);border-color:var(--accent);color:#070b12;font-weight:700}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .stat .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+  .stat .v{font-size:20px;font-weight:800;margin-top:3px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:0 0 12px}
+  canvas{width:100%;display:block;border-radius:10px}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:10px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:620px){.grid2{grid-template-columns:1fr}}
+  label.fld{display:block;font-size:12px;color:var(--muted);margin:8px 0 4px}
+  select,input[type=range]{width:100%}
+  select{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:14px}
+  .scrub{margin:6px 0}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .toggles{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+  .tg{font-size:12px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);
+    padding:7px 10px;border-radius:999px;cursor:pointer;user-select:none;transition:.15s}
+  .tg.on{color:#070b12;font-weight:700}
+  .tg.on.forge{background:var(--bad);border-color:var(--bad)}
+  .tg.on.replay{background:var(--sun);border-color:var(--sun)}
+  .tg.on.oow{background:var(--power);border-color:var(--power)}
+  .send{margin-top:14px;width:100%;border:0;border-radius:12px;padding:14px;font-size:15px;font-weight:800;
+    cursor:pointer;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07110f;transition:.15s}
+  .send:active{transform:translateY(1px)}
+  .gates{margin-top:14px;display:grid;gap:8px}
+  .gate{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:10px;padding:10px 12px;font-size:14px}
+  .gate .lamp{width:12px;height:12px;border-radius:50%;background:var(--muted);flex:none}
+  .gate.pass .lamp{background:var(--comm);box-shadow:0 0 10px var(--comm)}
+  .gate.fail .lamp{background:var(--bad);box-shadow:0 0 10px var(--bad)}
+  .gate .sub{color:var(--muted);font-size:12px;margin-left:auto;text-align:right}
+  .final{margin-top:12px;border-radius:12px;padding:14px;font-weight:800;font-size:16px;text-align:center}
+  .final.accept{background:rgba(47,210,122,.14);color:var(--comm);border:1px solid rgba(47,210,122,.5)}
+  .final.reject{background:rgba(255,86,104,.14);color:var(--bad);border:1px solid rgba(255,86,104,.5)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  .foot{color:var(--muted);font-size:12px;margin-top:6px}
+  .note{border-left:3px solid var(--accent);padding-left:12px;margin-top:10px;color:var(--muted);font-size:13px}
+  code{background:var(--panel2);padding:1px 6px;border-radius:5px}
+  input[type=number]{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:14px;width:100%}
+  .vpill{display:inline-block;padding:3px 10px;border-radius:999px;font-weight:800;font-size:13px}
+  .vpill.ok{background:var(--comm);color:#06130c}
+  .vpill.no{background:var(--bad);color:#1a0608}
+  .rankrow{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-top:6px;font-size:13px;align-items:center}
+  .rankrow .nm{font-weight:600}
+  .metric{display:inline-block;margin-right:16px;font-size:13px}
+  .covtrack{position:relative;height:44px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;margin:24px 0 6px}
+  .covband{position:absolute;top:0;bottom:0;background:rgba(139,125,255,.22);border-left:1px dashed var(--accent);border-right:1px dashed var(--accent)}
+  .covband span{position:absolute;top:-19px;left:0;font-size:11px;color:var(--accent);white-space:nowrap}
+  .covmark{position:absolute;top:-6px;bottom:-6px;width:2px;background:var(--earth)}
+  .covmark .lbl{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--earth);white-space:nowrap;font-weight:700}
+  .covmark .val{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--earth);font-weight:700}
+  .covticks{position:relative;height:14px;color:var(--muted);font-size:10px;margin-top:4px}
+  .covticks span{position:absolute;transform:translateX(-50%)}
+  .covlist{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:16px}
+  .covlist .cs{display:flex;justify-content:space-between;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12px}
+  .covlist .cs b{color:var(--earth)}
+  .covlist .cs.on{border-color:var(--earth)}
+  .adv{display:none}
+  body.adv-on .adv{display:block}
+  .introbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+  .introbox p{margin:6px 0}
+  .whofor{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 4px}
+  @media (max-width:620px){.whofor{grid-template-columns:1fr}}
+  .who{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .who .wtag{font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:800;color:var(--accent2);margin-bottom:6px}
+  .who .wtxt{font-size:13px;color:var(--muted);line-height:1.5}
+  .plainbig{font-size:17px;font-weight:800}
+  .toggle-adv{display:inline-block;margin-top:8px;font-size:13px;color:var(--accent2);cursor:pointer;border:1px solid var(--line);border-radius:999px;padding:7px 13px;background:var(--panel2);user-select:none}
+  @media (prefers-color-scheme:light){
+    :root:not([data-theme=dark]){--bg:#eef2f8;--panel:#fff;--panel2:#f1f4fa;--ink:#101826;--muted:#5a6678;--line:#d9e0ec;--shadow:0 8px 28px rgba(20,30,60,.08)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Lunar Command Window</h1>
+      <div class="tag">communication window + post-quantum command for the lunar south pole · NASA Space Apps #11</div>
+    </div>
+    <span class="mode" id="mode">...</span>
+  </div>
+
+  <div class="introbox">
+    <p class="plainbig">What is this?</p>
+    <p>Pick a spot on the Moon's south pole. Using real NASA data, the tool shows when it has <b>sunlight</b> (power) and when it can <b>talk to Earth</b>, and whether a mission would survive there. The default site is where MoonDAO plans to build a lunar base.</p>
+    <div class="whofor">
+      <div class="who">
+        <div class="wtag">for a mission planner</div>
+        <div class="wtxt">Compare Artemis III candidate sites on the numbers that pick a landing spot: longest darkness (battery), Earth-contact uptime and longest blackout (comms autonomy), and ground slope (landability). All from real JPL Horizons + LOLA terrain.</div>
+      </div>
+      <div class="who">
+        <div class="wtag">for a command operator</div>
+        <div class="wtxt">Sign a command on the Seeker with a post-quantum signature. The asset executes only if the signature verifies, the counter is fresh (anti-replay), and it is inside a real comm window. A forged, replayed, or out-of-window command is rejected.</div>
+      </div>
+    </div>
+    <span class="toggle-adv" id="toggleAdv">show technical details (crypto, on-chain) ▾</span>
+  </div>
+
+  <div class="sites" id="sites"></div>
+  <div class="stats" id="stats"></div>
+
+  <div class="card">
+    <h2>is this a good spot?</h2>
+    <div id="plain" class="verdict"></div>
+  </div>
+
+  <div class="card">
+    <h2>direct-to-Earth coverage · NASA's number vs this tool</h2>
+    <div class="covtrack" id="covtrack"></div>
+    <div class="covticks"><span style="left:0%">0%</span><span style="left:25%">25%</span><span style="left:50%">50%</span><span style="left:75%">75%</span><span style="left:100%">100%</span></div>
+    <div class="covlist" id="covlist"></div>
+    <div class="foot" id="covnote"></div>
+    <div class="note" id="covwhy"></div>
+  </div>
+
+  <div class="card">
+    <h2>3D terrain · lunar south pole (real LOLA) · drag to orbit, scroll to zoom</h2>
+    <div id="moonmount" style="position:relative;width:100%;height:460px;border-radius:12px;overflow:hidden;background:#05070d">
+      <div id="moonhint" style="position:absolute;left:12px;bottom:10px;z-index:2;font-size:12px;color:var(--muted);background:rgba(7,11,18,.55);border:1px solid var(--line);border-radius:8px;padding:6px 10px;pointer-events:none">drag orbit · scroll zoom · right-drag pan · click a pin to select the site</div>
+      <div id="moonlegend" style="position:absolute;right:12px;top:10px;z-index:2;font-size:12px;color:var(--muted);background:rgba(7,11,18,.55);border:1px solid var(--line);border-radius:8px;padding:6px 10px;pointer-events:none">
+        <span style="color:var(--sun)">●</span> Sun &nbsp; <span style="color:var(--earth)">●</span> Earth &nbsp; <span style="color:var(--accent2)">●</span> site
+      </div>
+    </div>
+    <div class="foot" style="margin-top:8px">the real crater terrain from the LOLA DEM (LDEM_75S_240M), vertical relief exaggerated 25x so the kilometre-scale ridges read. the Sun and Earth markers and the shadows track the real Horizons geometry at the time on the slider below.</div>
+  </div>
+
+  <div class="card">
+    <h2>sky at the site · Sun &amp; Earth over the horizon</h2>
+    <canvas id="sky" height="280"></canvas>
+    <input class="scrub" type="range" id="scrub" min="0" max="720" value="60" step="1" style="margin-top:12px">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <span class="tg" id="play" style="font-weight:700;cursor:pointer">▶ play a lunar month</span>
+      <span class="foot" id="skytime"></span>
+    </div>
+    <div class="foot" style="margin-top:6px">The jagged line is the real crater skyline from LOLA. Watch the Sun and Earth skim it and drop behind the ridges — that is exactly when power or the Earth link is lost.</div>
+  </div>
+
+  <div class="card">
+    <h2>orbital window · source: <span id="src" class="mono"></span></h2>
+    <canvas id="chart" height="320"></canvas>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--earth)"></span>Earth</span>
+      <span><span class="dot" style="background:var(--sun)"></span>Sun (x4)</span>
+      <span><span class="dot" style="background:var(--comm)"></span>comm window</span>
+      <span><span class="dot" style="background:var(--power)"></span>power window</span>
+      <span><span class="dot" style="background:var(--bad)"></span>terrain horizon (LOLA)</span>
+    </div>
+    <div class="foot" style="margin-top:8px">Blue = Earth's height above the horizon, orange = the Sun. Green = can talk to Earth, amber = has sunlight. The red dashed line is the crater horizon: when blue dips below it, a mountain blocks the view of Earth.</div>
+  </div>
+
+  <div class="card adv">
+    <h2>mission viability · decision</h2>
+    <div class="grid2">
+      <div><label class="fld">battery survives darkness (h)</label><input type="number" id="thBatt" value="120" min="0"></div>
+      <div><label class="fld">tolerable comm blackout (h)</label><input type="number" id="thGap" value="72" min="0"></div>
+    </div>
+    <div id="feas" class="feas"></div>
+    <div style="margin-top:14px;font-size:12px;letter-spacing:.6px;color:var(--muted);text-transform:uppercase">site comparison</div>
+    <div id="rank"></div>
+    <div class="foot" style="margin-top:8px">survival numbers from the real LOLA terrain horizon + JPL Horizons ephemeris. flat-horizon tools understate the darkness, and understating the darkness kills the lander.</div>
+  </div>
+
+  <div class="card adv">
+    <h2>MoonDAO DePrize · fit</h2>
+    <div id="deprize" class="grid2"></div>
+    <a href="solana-demo.html" style="display:inline-block;margin-top:12px;text-decoration:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07110f;font-weight:800;padding:11px 16px;border-radius:12px">see on-chain coordination · Solana devnet ↗</a>
+    <div class="foot" style="margin-top:8px">this site mapped to MoonDAO's capability framework. the tool is an open planning/evidence layer for the Night Shift (Power) race it survives, and for communications, a named component of the settlement roadmap. Moon Base Zero sits on the Connecting Ridge, the headline site here.</div>
+  </div>
+
+  <div class="card adv">
+    <h2>command console</h2>
+    <div class="grid2">
+      <div>
+        <label class="fld">lunar asset</label>
+        <select id="asset">
+          <option>LUNAR-ROVER-01</option><option>HAB-POWER-01</option><option>RELAY-SAT-07</option>
+        </select>
+      </div>
+      <div>
+        <label class="fld">command</label>
+        <select id="command">
+          <option>DEPLOY_PANEL</option><option>ROVER_MOVE</option><option>SET_MODE_SAFE</option><option>ABORT</option>
+        </select>
+      </div>
+    </div>
+    <div id="covconsole" class="note" style="margin-top:0;margin-bottom:12px"></div>
+    <label class="fld">send time <span id="tlabel" class="mono"></span> <span class="foot">(use the sky slider above)</span></label>
+    <div id="winstate" class="foot"></div>
+
+    <div class="toggles">
+      <span class="tg forge" id="tg-forge">tamper command</span>
+      <span class="tg replay" id="tg-replay">replay (old counter)</span>
+      <span class="tg oow" id="tg-oow">force out of window</span>
+    </div>
+
+    <button class="send" id="send">sign on the Seeker and send</button>
+
+    <div class="gates" id="gates" style="display:none">
+      <div class="gate" id="g1"><span class="lamp"></span><span>gate 1 · ML-DSA signature (post-quantum)</span><span class="sub" id="g1s"></span></div>
+      <div class="gate" id="g2"><span class="lamp"></span><span>gate 2 · counter (anti-replay)</span><span class="sub" id="g2s"></span></div>
+      <div class="gate" id="g3"><span class="lamp"></span><span>gate 3 · inside the comm window</span><span class="sub" id="g3s"></span></div>
+      <div class="final" id="final"></div>
+    </div>
+    <div class="note" id="bridgenote"></div>
+  </div>
+
+  <div class="card adv">
+    <h2>why post-quantum</h2>
+    <div>the map doesn't need crypto. the <b>command</b> does. a forged command to a lunar asset is not a data leak, it is takeover: point the antenna off-Earth, drain the battery, brick the lander. a classical signature (ed25519) rests on math a future quantum computer breaks, and the asset lives for decades on a key you cannot rotate once it is on the Moon. so the signing authority must be quantum-resistant <i>from launch</i>. this is a longevity and forgery argument, not "harvest now, decrypt later" (that is about encryption, not signatures). every command is signed <b>hybrid</b>: ed25519 (classical, Seed Vault identity) <b>and</b> ML-DSA (FIPS 204, post-quantum, keystore). if either scheme holds, the command is still authentic.</div>
+    <div class="foot">cost is real: an ML-DSA-65 signature is kilobytes against tens of bytes for ed25519, on a starved telecommand link. justified for long-lived, high-value, hard-to-rekey assets, which is exactly this one. ESA's E2EQSS proposes this same ML-DSA-65 + ML-KEM-768 direction for CCSDS/SDLS; it is not yet a ratified standard.</div>
+  </div>
+</div>
+
+<script src="windows_data.js"></script>
+<script src="three-bundle.js"></script>
+<script src="moon_dem.js"></script>
+<script src="moon3d.js"></script>
+<script>
+const D = window.LUNAR_DATA;
+const el = id => document.getElementById(id);
+let cur = 0, lastCounter = 41, counter = 42;
+let _moonReady = false;
+
+// epoch base = 2026-02-01 UTC (matches the horizons export)
+const EPOCH0 = Date.UTC(2026,1,1)/1000;
+
+// native bridge (injected by the android WebView). absent in the browser -> simulated mode.
+const BRIDGE = window.LunarBridge || null;
+el('mode').textContent = BRIDGE ? 'on-device (native bridge)' : 'preview browser (simulated signature)';
+el('mode').className = 'mode ' + (BRIDGE ? 'device' : 'dev');
+el('bridgenote').innerHTML = BRIDGE
+  ? 'real ML-DSA signing and verification via the native bridge (bouncycastle/keystore).'
+  : 'preview without a device: gate 1 below is a <b>labeled stand-in</b>. in the app (WebView on the Seeker) it runs real ML-DSA. it is not fake crypto dressed up as real.';
+
+el('src').textContent = D.source;
+
+const sitesEl = el('sites');
+D.sites.forEach((s,i)=>{
+  const b=document.createElement('button');
+  b.className='site'+(i===0?' active':''); b.textContent=s.name;
+  b.onclick=()=>{cur=i;[...sitesEl.children].forEach(c=>c.classList.remove('active'));b.classList.add('active');render();};
+  sitesEl.appendChild(b);
+});
+
+const tg={forge:false,replay:false,oow:false};
+['forge','replay','oow'].forEach(k=>{
+  el('tg-'+k).onclick=()=>{tg[k]=!tg[k];el('tg-'+k).classList.toggle('on',tg[k]);};
+});
+
+function fmtH(h){const d=Math.floor(h/24),r=Math.round(h%24);return `t+${h}h · day ${d}, ${r}h`;}
+function issuedEpoch(h){return Math.round(EPOCH0 + h*3600);}
+function inCommWindow(h){
+  const s=D.sites[cur];
+  return s.comm_windows.some(w=>h>=w.start_h && h<=w.end_h);
+}
+
+function render(){
+  const s=D.sites[cur];
+  const cov=(terr,flat)=>`${(terr*100).toFixed(0)}%<span style="color:var(--muted);font-size:12px;font-weight:500"> / flat ${(flat*100).toFixed(0)}%</span>`;
+  el('stats').innerHTML=[
+    ['communication (LOLA terrain)',cov(s.comm_cov,s.comm_cov_flat)],
+    ['power (LOLA terrain)',cov(s.power_cov,s.power_cov_flat)],
+    ['site elevation',s.site_elev_m+' m'],
+    ['comm windows',s.comm_windows.length],
+  ].map(([k,v])=>`<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  drawChart(); updateWin(); renderFeas(); renderRank(); renderDePrize(); renderPlain(); renderCoverage(); renderCovConsole(); drawSky();
+  if(_moonReady){ Moon3D.setSite(cur); Moon3D.setTime(+el('scrub').value); }
+}
+// coverage reading wired into the command console: ties the site's Earth-contact
+// uptime and its blackout complement to why the command self-authenticates.
+function renderCovConsole(){
+  const s=D.sites[cur], up=Math.round(s.comm_cov*100), gap=100-up;
+  el('covconsole').innerHTML=
+    `<b>${s.name.split(' · ')[0]}</b> reaches Earth <b class="mono">${up}%</b> of the time here (NASA south-pole direct-to-Earth band 17–43%). `+
+    `The other <b class="mono">${gap}%</b> is blackout, no operator on the link. `+
+    `That is why gate 3 checks the window, and why the command carries its own post-quantum signature (gates 1–2): it must hold when nobody can intervene.`;
+}
+// NASA LCRNS direct-to-Earth coverage band for the lunar south pole:
+// 17% (worst, Spudis Ridge Peak) to 43% (best, Mount Malapert Peak), 10-yr line-of-sight,
+// center of Earth. Source: Workshop on Cislunar PNT, 11-13 Feb 2025 (LCRNS PNT Services).
+const NASA_DTE_LO=17, NASA_DTE_HI=43;
+function renderCoverage(){
+  const s=D.sites[cur], pct=s.comm_cov*100;
+  el('covtrack').innerHTML=
+    `<div class="covband" style="left:${NASA_DTE_LO}%;width:${NASA_DTE_HI-NASA_DTE_LO}%"><span>NASA LCRNS 10-yr DTE band ${NASA_DTE_LO}–${NASA_DTE_HI}%</span></div>`+
+    `<div class="covmark" style="left:${Math.max(0,Math.min(100,pct))}%"><span class="lbl">this site · this month</span><span class="val">${pct.toFixed(0)}%</span></div>`;
+  el('covlist').innerHTML=D.sites.map((x,i)=>
+    `<div class="cs${i===cur?' on':''}"><span>${x.name.split(' · ')[0]}</span><b>${(x.comm_cov*100).toFixed(0)}%</b></div>`).join('');
+  el('covnote').innerHTML=
+    `NASA: 10-year line-of-sight average, center of Earth (worst case Spudis Ridge Peak ${NASA_DTE_LO}%, best Mount Malapert Peak ${NASA_DTE_HI}%; Workshop on Cislunar PNT, 11-13 Feb 2025). `+
+    `This tool: one lunar month (${D.period.start} to ${D.period.stop}), real Earth track gated by the real LOLA terrain horizon. `+
+    `A single favorable month reads above a 10-year mean; the point is the method and the order of magnitude, not an exact match.`;
+  el('covwhy').innerHTML=
+    `Why it matters: direct-to-Earth is the only command path until the first LCRNS relay (IOC phase Alpha: one Augmented Forward Signal over the south pole). `+
+    `For the share of time with no Earth contact, a command must carry authority the asset can verify on its own, for its whole life. That is the post-quantum signature below.`;
+}
+function renderPlain(){
+  const s=D.sites[cur], dark=s.longest_dark_h, up=Math.round(s.comm_cov*100), slope=s.slope_deg, flat=slope<=15;
+  const good=dark<=240 && flat;
+  const best=[...D.sites].sort((a,b)=>a.longest_dark_h-b.longest_dark_h)[0];
+  el('plain').innerHTML=
+    `<div style="font-size:16px;margin-bottom:10px">${good?'<span class="vpill ok">good spot</span>':'<span class="vpill no">tough</span>'} &nbsp; ${s.name}</div>`+
+    `<div style="line-height:1.95">`+
+    `• up to <b class="mono">${dark} h</b> of darkness in a row — needs a battery that lasts that long<br>`+
+    `• talks to Earth <b class="mono">${up}%</b> of the time<br>`+
+    `• the ground is ${flat?`<b>flat</b> (${slope}°), you can land`:`<b>steep</b> (${slope}°), risky landing`}</div>`+
+    `<div class="foot" style="margin-top:10px">among the sites, the one with the shortest night is <b>${best.name}</b>. all computed with the real crater terrain (not a smooth ball).</div>`;
+}
+const _tgl=document.getElementById('toggleAdv');
+if(_tgl) _tgl.onclick=()=>{document.body.classList.toggle('adv-on');
+  _tgl.textContent=document.body.classList.contains('adv-on')?'hide technical details ▴':'show technical details (crypto, on-chain) ▾';};
+function renderDePrize(){
+  const s=D.sites[cur], night=s.longest_dark_h, blackout=s.longest_blackout_h, up=Math.round(s.comm_cov*100), lc=s.longest_contact_h;
+  el('deprize').innerHTML=
+    `<div class="stat"><div class="k">DePrize · Night Shift (power)</div>`+
+    `<div class="v">${night} h</div><div class="foot">longest lunar night here. the race: a machine that survives it.</div></div>`+
+    `<div class="stat"><div class="k">Comms · settlement component</div>`+
+    `<div class="v">${up}% · gap ${blackout} h</div><div class="foot">Earth-contact uptime and longest blackout. communications is a named component of MoonDAO's settlement roadmap (no standalone DePrize race today; live races are Touchdown, First Tracks, Water Ice, Night Shift).</div></div>`;
+}
+
+function drawChart(){
+  const s=D.sites[cur], cv=el('chart'), dpr=window.devicePixelRatio||1;
+  const W=cv.clientWidth,H=320; cv.width=W*dpr; cv.height=H*dpr;
+  const g=cv.getContext('2d'); g.scale(dpr,dpr); g.clearRect(0,0,W,H);
+  const padL=38,padR=12,padT=12,padB=42,cw=W-padL-padR,ch=H-padT-padB;
+  const n=s.t_h.length,tmax=s.t_h[n-1];
+  const C=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  const X=t=>padL+(t/tmax)*cw, yMax=10, Y=e=>padT+(1-(e+yMax)/(2*yMax))*ch;
+  function band(pred,color,y0,h){g.fillStyle=color;for(let i=0;i<n-1;i++)if(pred(i)){const x=X(s.t_h[i]);g.fillRect(x,y0,X(s.t_h[i+1])-x+.6,h);}}
+  g.globalAlpha=.12;band(i=>s.earth_el[i]>s.earth_horizon[i],C('--comm'),padT,ch);g.globalAlpha=1;
+  g.globalAlpha=.85;band(i=>s.sun_el[i]>s.sun_horizon[i],C('--power'),H-padB+8,8);g.globalAlpha=1;
+  g.strokeStyle=C('--line');g.beginPath();g.moveTo(padL,Y(0));g.lineTo(W-padR,Y(0));g.stroke();
+  g.fillStyle=C('--muted');g.font='11px system-ui';g.fillText('0°',6,Y(0)+3);
+  for(let d=0;d*24<=tmax;d+=5){const x=X(d*24);g.fillText('d'+d,x-6,H-padB+26);}
+  function curve(arr,color,amp){g.strokeStyle=color;g.lineWidth=2;g.beginPath();for(let i=0;i<n;i++){const x=X(s.t_h[i]),y=Y(arr[i]*amp);i?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}
+  curve(s.sun_el,C('--sun'),4); curve(s.earth_el,C('--earth'),1);
+  // real LOLA terrain horizon along Earth's track (dashed red): Earth below it = blocked by terrain
+  g.strokeStyle=C('--bad');g.lineWidth=1.5;g.setLineDash([3,3]);g.globalAlpha=.85;g.beginPath();
+  for(let i=0;i<n;i++){const x2=X(s.t_h[i]),y2=Y(s.earth_horizon[i]);i?g.lineTo(x2,y2):g.moveTo(x2,y2);}g.stroke();g.setLineDash([]);g.globalAlpha=1;
+  const t=+el('scrub').value,x=X(t);
+  g.strokeStyle=C('--accent');g.setLineDash([4,4]);g.beginPath();g.moveTo(x,padT);g.lineTo(x,H-padB);g.stroke();g.setLineDash([]);
+}
+
+function sampleAt(h){const s=D.sites[cur],n=s.t_h.length,i=Math.max(0,Math.min(n-1,Math.round(h/(s.t_h[n-1]/(n-1)))));return{earth:s.earth_el[i],sun:s.sun_el[i],ehz:s.earth_horizon[i]};}
+
+function updateWin(){
+  const h=+el('scrub').value,v=sampleAt(h),open=inCommWindow(h);
+  el('tlabel').textContent=fmtH(h);
+  el('winstate').innerHTML = open
+    ? `Earth <b class="mono">${v.earth.toFixed(2)}°</b> vs terrain horizon <b class="mono">${v.ehz.toFixed(2)}°</b> · <span style="color:var(--comm)">window open, command reaches Earth</span>`
+    : `Earth <b class="mono">${v.earth.toFixed(2)}°</b> vs terrain horizon <b class="mono">${v.ehz.toFixed(2)}°</b> · <span style="color:var(--bad)">Earth below the terrain, no link</span>`;
+}
+
+el('scrub').addEventListener('input',()=>{drawChart();updateWin();renderFeas();drawSky();if(_moonReady)Moon3D.setTime(+el('scrub').value);});
+
+// --- planner core: survival metrics, viability, ranking, time-to-next ---
+function visArrays(s){const n=s.t_h.length,eV=[],sV=[];for(let i=0;i<n;i++){eV.push(s.earth_el[i]>s.earth_horizon[i]);sV.push(s.sun_el[i]>s.sun_horizon[i]);}return{eV,sV};}
+function nextFlip(arr,ci){const cur=arr[ci];for(let i=ci+1;i<arr.length;i++){if(arr[i]!==cur)return{h:i-ci,to:arr[i]};}return null;}
+function feasOf(s,battH,gapH){const darkOk=s.longest_dark_h<=battH,gapOk=s.longest_blackout_h<=gapH;
+  return{dark:s.longest_dark_h,blackout:s.longest_blackout_h,darkOk,gapOk,viable:darkOk&&gapOk,margin:(battH-s.longest_dark_h)+(gapH-s.longest_blackout_h)};}
+function renderFeas(){
+  const s=D.sites[cur],battH=+el('thBatt').value||0,gapH=+el('thGap').value||0,f=feasOf(s,battH,gapH);
+  const ci=Math.max(0,Math.min(s.t_h.length-1,Math.round(+el('scrub').value)));
+  const {eV,sV}=visArrays(s),ne=nextFlip(eV,ci),ns=nextFlip(sV,ci);
+  const t=(x,up,dn)=>x?(x.to?`${up} in ${x.h} h`:`${dn} in ${x.h} h`):'no transition in window';
+  el('feas').innerHTML=
+    `<div style="margin-bottom:8px">${f.viable?'<span class="vpill ok">VIABLE</span>':'<span class="vpill no">NOT VIABLE</span>'} for the current limits</div>`+
+    `<div><span class="metric">longest darkness <b class="mono" style="color:${f.darkOk?'var(--comm)':'var(--bad)'}">${f.dark} h</b></span>`+
+    `<span class="metric">longest comm blackout <b class="mono" style="color:${f.gapOk?'var(--comm)':'var(--bad)'}">${f.blackout} h</b></span>`+
+    `<span class="metric">landing slope <b class="mono" style="color:${s.slope_deg>15?'var(--bad)':'var(--comm)'}">${s.slope_deg}°</b>${s.slope_deg>15?' <span style="color:var(--bad)">hazard</span>':''}</span></div>`+
+    `<div class="foot" style="margin-top:8px">from the cursor: ${t(ne,'Earthrise','Earthset')} · ${t(ns,'Sunrise','Sunset')}</div>`;
+}
+function renderRank(){
+  const battH=+el('thBatt').value||0,gapH=+el('thGap').value||0;
+  const rows=D.sites.map(s=>({s,f:feasOf(s,battH,gapH)})).sort((a,b)=>(b.f.viable-a.f.viable)||(b.f.margin-a.f.margin));
+  el('rank').innerHTML=rows.map(r=>
+    `<div class="rankrow"><span class="nm">${r.s.name}</span><span>`+
+    `${r.f.viable?'<span class="vpill ok">viable</span>':'<span class="vpill no">not viable</span>'} `+
+    `<span class="foot">dark ${r.f.dark}h · blackout ${r.f.blackout}h</span></span></div>`).join('');
+}
+['thBatt','thGap'].forEach(id=>el(id).addEventListener('input',()=>{renderFeas();renderRank();}));
+window.addEventListener('resize',drawChart);
+window.addEventListener('resize',drawSky);
+function drawSky(){
+  const s=D.sites[cur], cv=el('sky'); if(!cv) return;
+  const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=280;
+  cv.width=W*dpr; cv.height=H*dpr; const g=cv.getContext('2d'); g.scale(dpr,dpr); g.clearRect(0,0,W,H);
+  const C=k=>getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+  const padT=10, padB=24, plotH=H-padT-padB, elMin=-2, elMax=18;
+  const X=az=>(az/360)*W, Y=e=>padT+(1-(e-elMin)/(elMax-elMin))*plotH;
+  const hz=az=>s.horizon_deg[((Math.round(az)%360)+360)%360];
+  const grd=g.createLinearGradient(0,0,0,H); grd.addColorStop(0,'#0a1836'); grd.addColorStop(1,'#241433');
+  g.fillStyle=grd; g.fillRect(0,0,W,H);
+  g.strokeStyle='rgba(255,255,255,.14)'; g.lineWidth=1; g.beginPath(); g.moveTo(0,Y(0)); g.lineTo(W,Y(0)); g.stroke();
+  g.fillStyle=C('--muted'); g.font='10px system-ui'; g.fillText('0° horizon', 6, Y(0)-4);
+  const ci=Math.max(0,Math.min(s.t_h.length-1,Math.round(+el('scrub').value)));
+  const draw=(az,elv,color,r)=>{const x=X(az),y=Y(elv);g.save();g.shadowColor=color;g.shadowBlur=20;g.fillStyle=color;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.restore();return{x,y,az,elv,blocked:elv<hz(az)};};
+  const sun=draw(s.sun_az[ci], s.sun_el[ci], C('--sun'), 9);
+  const earth=draw(s.earth_az[ci], s.earth_el[ci], C('--earth'), 11);
+  g.beginPath(); g.moveTo(0,H);
+  for(let az=0;az<=360;az+=1) g.lineTo(X(az), Y(hz(az)));
+  g.lineTo(W,H); g.closePath();
+  const tgr=g.createLinearGradient(0,Y(0),0,H); tgr.addColorStop(0,'#3a4152'); tgr.addColorStop(1,'#0c0e13');
+  g.fillStyle=tgr; g.fill();
+  g.font='12px system-ui';
+  [['Sun',sun,C('--sun')],['Earth',earth,C('--earth')]].forEach(([nm,b,col])=>{
+    g.fillStyle=col;
+    if(b.blocked){ const x=X(b.az),y=Y(hz(b.az)); g.globalAlpha=.6; g.beginPath(); g.arc(x,y,4,0,7); g.fill(); g.globalAlpha=1; g.fillText(nm+' behind ridge', x+7, y-4); }
+    else g.fillText(nm, b.x+13, b.y+4);
+  });
+  g.fillStyle=C('--muted'); g.font='11px system-ui';
+  [['N',0],['E',90],['S',180],['W',270]].forEach(([t,a])=>g.fillText(t, X(a)+3, H-8));
+  el('skytime').textContent = `${fmtH(+el('scrub').value)} — Sun ${sun.blocked?'down':'up'}, Earth ${earth.blocked?'behind ridge':'up'}`;
+}
+let _playing=false,_pt=null;
+const _play=el('play');
+if(_play) _play.onclick=()=>{ _playing=!_playing; _play.textContent=_playing?'❚❚ pause':'▶ play a lunar month';
+  if(_playing){ _pt=setInterval(()=>{ let v=+el('scrub').value+3; if(v>720)v=0; el('scrub').value=v; el('scrub').dispatchEvent(new Event('input')); },60); }
+  else clearInterval(_pt); };
+
+// --- signature: real via bridge, or labeled stand-in in the browser ---
+async function signCommand(payload){
+  if(BRIDGE && BRIDGE.signMLDSA){ // native bridge returns base64
+    return {sig: await BRIDGE.signMLDSA(payload), real:true};
+  }
+  // stand-in: "signature" = length of the authentic payload. tampering changes the payload -> mismatch.
+  return {sig:'SIMULATED:'+payload.length, real:false};
+}
+function verifySig(signedPayload, sig, presentedPayload, real){
+  if(real && BRIDGE && BRIDGE.verifyMLDSA) return BRIDGE.verifyMLDSA(presentedPayload, sig);
+  return sig === 'SIMULATED:'+signedPayload.length && signedPayload===presentedPayload;
+}
+
+el('send').onclick=async ()=>{
+  const asset=el('asset').value, command=el('command').value;
+  let h=+el('scrub').value;
+  if(tg.oow){ // push to an instant outside any window (middle of the first blackout)
+    const s=D.sites[cur]; if(s.comm_windows[0]) h=Math.round(s.comm_windows[0].end_h+24);
+    el('scrub').value=Math.min(h,720); drawChart(); updateWin();
+  }
+  const useCounter = tg.replay ? lastCounter : counter; // replay reuses the already-seen counter
+  const issued = issuedEpoch(h);
+  const winId = 'WIN-'+Math.floor(h/24);
+  // canonical payload (same as the java core: v1|asset|command|counter|issued|win)
+  const authentic = `v1|${asset}|${command}|${useCounter}|${issued}|${winId}`;
+  const {sig,real} = await signCommand(authentic);
+  // what reaches the ground: if tampered, the presented command differs from the signed one
+  const presented = tg.forge ? `v1|${asset}|SELF_DESTRUCT|${useCounter}|${issued}|${winId}` : authentic;
+
+  const g1 = verifySig(authentic, sig, presented, real);
+  const g2 = useCounter > lastCounter;
+  const g3 = inCommWindow(h);
+
+  setGate('g1',g1, real? 'ML-DSA real':'stand-in');
+  setGate('g2',g2, `counter ${useCounter} vs seen ${lastCounter}`);
+  setGate('g3',g3, g3?'inside':'outside');
+  el('gates').style.display='grid';
+  const ok=g1&&g2&&g3;
+  el('final').className='final '+(ok?'accept':'reject');
+  el('final').textContent = ok ? 'ACCEPT · command executed on the lunar asset'
+    : 'REJECT · command discarded ('+[!g1&&'signature',!g2&&'replay',!g3&&'out of window'].filter(Boolean).join(', ')+')';
+  if(ok){ lastCounter=useCounter; counter=useCounter+1; }
+};
+function setGate(id,pass,sub){const e=el(id);e.className='gate '+(pass?'pass':'fail');el(id+'s').textContent=sub;}
+
+render();
+
+// 3D terrain globe (three.js vendored locally; real LOLA cap). optional: fails soft.
+try{
+  if(window.Moon3D && window.MOON_DEM_META && window.THREE){
+    Moon3D.init(el('moonmount'));
+    Moon3D.onPick(i=>{ cur=i; [...sitesEl.children].forEach((c,j)=>c.classList.toggle('active',j===i)); render(); });
+    _moonReady=true;
+    Moon3D.setSite(cur); Moon3D.setTime(+el('scrub').value);
+  }
+}catch(e){
+  console.error('moon3d init failed', e);
+  const m=el('moonmount'); if(m) m.innerHTML='<div style="padding:24px;color:var(--muted);font-size:13px">3D view could not start in this browser (WebGL). The rest of the tool works.</div>';
+}
+</script>
+</body>
+</html>

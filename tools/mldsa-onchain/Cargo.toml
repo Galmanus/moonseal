@@ -1,0 +1,22 @@
+[package]
+name = "mldsa-onchain"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Spike: verify an ML-DSA-65 (FIPS 204) signature inside a Solana program, reading key+signature from an account (the Vineland/riverrun buffer pattern), and measure compute units."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+solana-program = "=2.2.1"
+sha3 = { version = "=0.10.9", default-features = false }   # already in solana-program's tree
+
+[dev-dependencies]
+litesvm = "0.6"
+solana-sdk = "2"
+solana-compute-budget = "2.2"
+bincode = "1"

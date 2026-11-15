@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>moonseal · land in the light, command with a post-quantum seal</title>
+<meta name="description" content="moonseal: compare lunar south-pole landing sites and dates (Sun up for power, Earth in view for direct contact) from real JPL Horizons ephemeris and LOLA terrain, then command the lander with a post-quantum seal: ML-DSA-65 signed on a Solana Seeker and verified by a Solana program.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" type="image/svg+xml" href="app/brand/moonseal-favicon.svg">
+<link rel="stylesheet" href="app/app.css">
+</head>
+<body>
+<canvas id="moon" tabindex="0" aria-label="The Moon, lit by the real Sun for the selected date. Drag to turn, scroll to zoom, tap to choose a spot."></canvas>
+<div id="vignette"></div>
+<div id="pins" aria-live="off"></div>
+
+<header id="bar" class="glass">
+  <div class="brand"><img class="brand-mark" src="app/brand/moonseal-mark.svg" alt="" width="30" height="30">moonseal <small>· south pole · post-quantum</small></div>
+  <nav class="seg" aria-label="View">
+    <button data-view="hero" aria-pressed="true">Moon</button>
+    <button data-view="earth" aria-pressed="false" title="The Moon as seen from Earth: watch the south pole tip toward and away (libration)">From Earth</button>
+    <button data-view="pole" aria-pressed="false">South Pole</button>
+    <button data-view="site" aria-pressed="false">Site</button>
+    <button data-view="command" aria-pressed="false" title="Post-quantum command to the lander, gated by line of sight">Command</button>
+    <button data-view="why" aria-pressed="false" title="Why land at the Moon’s south pole: light, ice and line of sight">Why the pole</button>
+  </nav>
+  <button class="when-chip" id="whenBtn" aria-label="Change date and time"><span class="dot"></span><span id="whenTxt" class="num">…</span></button>
+  <button class="icon-btn" id="mapBtn" title="Map: where the Sun and Earth are above the horizon" aria-pressed="false">◐</button>
+  <button class="icon-btn" id="sitesBtn" title="All landing sites">☰</button>
+  <button class="icon-btn" id="aboutBtn" title="How this works">i</button>
+  <input type="datetime-local" id="whenInput" step="3600" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">
+</header>
+
+<section id="hero" aria-labelledby="heroTitle">
+  <div class="eyebrow">NASA Space Apps 2026 · Lunar Landing Site Navigator</div>
+  <h1 id="heroTitle">Land where the <span class="sun">Sun</span> stays up and <span class="earth">Earth</span> stays in view.</h1>
+  <p class="lede">At the Moon’s south pole the Sun skims the horizon and Earth bobs in and out of sight. Pick a site and a date to see power and direct-to-Earth contact, computed from real NASA ephemeris and terrain. Then command it with a post-quantum seal: signed on a Solana Seeker, verified by a Solana program.</p>
+  <div class="chips" id="heroChips"></div>
+  <div class="hero-foot">Sunlight shown for <b id="heroWhen">…</b>, from JPL Horizons. Terrain: LRO LOLA. Color: LRO LROC.</div>
+</section>
+
+<aside id="panel" class="glass" hidden aria-label="Landing site">
+  <div class="grab" aria-hidden="true"></div>
+  <div class="scroll" id="panelBody"></div>
+</aside>
+
+<div id="picker" class="glass glass-strong" hidden role="dialog" aria-label="Landing sites">
+  <div class="scroll" id="pickerBody"></div>
+</div>
+
+<div id="maplegend" class="glass">
+  <div class="lg"><i style="background:#6dffa0"></i>Sun and Earth both up</div>
+  <div class="lg"><i style="background:#ffa030"></i>Sun only (power, no Earth link)</div>
+  <div class="lg"><i style="background:#3a86ff"></i>Earth only (link, no power)</div>
+  <div class="lg"><i style="background:#0b0d12;border:1px solid #333"></i>Neither</div>
+</div>
+
+<footer id="dock" class="glass">
+  <div class="dock-top">
+    <button class="play" id="playBtn" aria-label="Play">▶</button>
+    <div>
+      <div class="date num" id="dockDate">…</div>
+      <div class="phase" id="dockPhase">…</div>
+    </div>
+    <div class="legend" id="tlLegend"><span><i style="background:var(--sun)"></i>Sun up</span><span><i style="background:var(--earth)"></i>Earth in view</span><span><i style="background:var(--good)"></i>Good day to land</span></div>
+    <div class="speed" role="group" aria-label="Playback speed">
+      <button data-speed="6">6 h/s</button><button data-speed="24" aria-pressed="true">1 day/s</button><button data-speed="168">1 wk/s</button>
+    </div>
+  </div>
+  <canvas id="tl" height="80" aria-label="Timeline: drag to change the date"></canvas>
+</footer>
+
+<div id="about" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="sheet glass glass-strong" id="aboutBody"></div>
+</div>
+<div id="toast" class="glass"></div>
+<div id="loader"><div class="in"><img class="load-mark" src="app/brand/moonseal-mark.svg" alt="" width="84" height="84"><div>moonseal · loading the Moon from NASA LRO &amp; LOLA</div></div></div>
+
+<script src="three-bundle.js"></script>
+<script src="ephem_data.js"></script>
+<script src="sites_data.js"></script>
+<script src="app/ephem.js"></script>
+<script src="app/site_tiles.js"></script>
+<script src="app/spring.js"></script>
+<script src="app/globe.js"></script>
+<script src="app/model.js"></script>
+<script src="app/ui.js"></script>
+<script src="app/pq-bundle.js"></script>
+<script src="solana-demo-config.js"></script>
+<script src="app/onchain-config.js"></script>
+<script src="app/command.js"></script>
+<script src="app/why-pole.js"></script>
+</body>
+</html>

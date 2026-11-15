@@ -1,0 +1,49 @@
+{
+ "pole": {
+  "source": "LOLA LDEM_75S_240M (PDS), polar stereographic, centre lat -90, lon 0",
+  "r_km": 1737.4,
+  "dn_to_km": 0.0005,
+  "projection": "rho = 2R tan(c/2), c = colatitude from the south pole; X = rho sin(lon), Y = rho cos(lon), lon east-positive (matches core/lola_horizon.py)",
+  "row_order": "row 0 = +Y edge (north-ish, toward lon 0 meridian); col 0 = -X edge",
+  "full": {
+   "file": "pole_full_1906.i16",
+   "size": 1906,
+   "km_per_px": 0.48,
+   "half_width_km": 457.44,
+   "uv": "s = 0.5 + X/914.88 ; t = 0.5 - Y/914.88"
+  },
+  "inner": {
+   "file": "pole_inner_2048.i16",
+   "size": 2048,
+   "km_per_px": 0.24,
+   "half_width_km": 245.76,
+   "uv": "s = 0.5 + X/491.52 ; t = 0.5 - Y/491.52"
+  },
+  "height_range_m": [
+   -7764.5,
+   7024.5
+  ]
+ },
+ "globe": {
+  "source": "NASA SVS CGI Moon Kit #4720 (LRO LROC WAC color, LOLA ldem_16)",
+  "layout": "equirectangular, left edge 180W, top row 90N, east-positive",
+  "normal": "tangent space, R=east G=north B=up, true (1x) slopes, faded to flat above |lat| 88",
+  "color": [
+   "moon_color_2k.jpg",
+   "moon_color_4k.jpg",
+   "moon_color_8k.jpg"
+  ]
+ },
+ "heights": {
+  "file": "moon_height_4k.i16",
+  "w": 4096,
+  "h": 2048,
+  "unit": "m above 1737.4 km",
+  "layout": "row 0 = 90 N, col 0 = 180 W, east-positive",
+  "source": "LOLA ldem_16 (CGI Moon Kit #4720)",
+  "range_m": [
+   -8982,
+   10622
+  ]
+ }
+}

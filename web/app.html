@@ -15,16 +15,15 @@
 <div id="pins" aria-live="off"></div>
 
 <header id="bar" class="glass">
-  <div class="brand"><img class="brand-mark" src="app/brand/moonseal-mark.svg" alt="" width="30" height="30">moonseal <small>· south-pole landing planner</small></div>
-  <nav class="seg" aria-label="View">
-    <button data-view="hero" aria-pressed="true">Moon</button>
-    <button data-view="pole" aria-pressed="false">South Pole</button>
-    <button data-view="site" aria-pressed="false">Site</button>
-    <button data-view="command" aria-pressed="false" title="Seal what you found: signed post-quantum, recorded in public on Solana">Seal</button>
+  <button class="brand" id="homeBtn" type="button" aria-label="moonseal: back to the start"><img class="brand-mark" src="app/brand/moonseal-mark.svg" alt="" width="30" height="30">moonseal <small>· south-pole landing planner</small></button>
+  <nav class="seg steps" aria-label="Steps">
+    <button data-step="1" aria-pressed="false"><span class="n" aria-hidden="true">1</span>Choose a site</button>
+    <button data-step="2" aria-pressed="false"><span class="n" aria-hidden="true">2</span>When to land</button>
+    <button data-step="3" aria-pressed="false" title="Sign what you found, post-quantum, and record it in public on Solana"><span class="n" aria-hidden="true">3</span>Seal it</button>
   </nav>
   <button class="when-chip" id="whenBtn" aria-label="Change date and time"><span class="dot"></span><span id="whenTxt" class="num">…</span></button>
-  <button class="icon-btn" id="mapBtn" title="Map: where the Sun and Earth are above the horizon" aria-pressed="false"><span aria-hidden="true">◐</span><span class="ib-l">Map</span></button>
-  <button class="icon-btn" id="sitesBtn" title="All landing sites"><span aria-hidden="true">☰</span><span class="ib-l">Sites</span></button>
+  <button class="icon-btn" id="mapBtn" hidden title="Map: where the Sun and Earth are above the horizon" aria-pressed="false"><span aria-hidden="true">◐</span><span class="ib-l">Map</span></button>
+  <button class="icon-btn" id="sitesBtn" hidden title="All landing sites"><span aria-hidden="true">☰</span><span class="ib-l">Sites</span></button>
   <button class="icon-btn" id="aboutBtn" title="How this works"><span aria-hidden="true">i</span><span class="ib-l">Help</span></button>
   <input type="datetime-local" id="whenInput" step="3600" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px">
 </header>
@@ -32,20 +31,9 @@
 <section id="hero" aria-labelledby="heroTitle">
   <div class="eyebrow">NASA Space Apps 2026 · Lunar Landing Site Navigator</div>
   <h1 id="heroTitle">Pick the <span class="good">right day</span> to land on the Moon’s south pole.</h1>
-  <p class="lede">There the Sun barely rises and Earth hides behind the mountains. Land on the wrong day and your lander runs out of power or loses contact with Earth. moonseal shows, for any spot, the good days to land, from NASA data. Found a good one? moonseal seals it: your finding, signed with a post-quantum signature and recorded in public on Solana, as proof of what you found and when.</p>
-  <button class="why-teaser" id="heroWhy" type="button" aria-haspopup="dialog">
-    <svg class="wt-art" viewBox="0 0 46 46" aria-hidden="true">
-      <rect x=".5" y=".5" width="45" height="45" rx="12" fill="rgba(12,14,20,.6)" stroke="rgba(255,179,64,.35)"/>
-      <circle cx="11" cy="28" r="5.5" style="fill:var(--sun)"/>
-      <path d="M2 30 L14 30 L21 22.5 L27 30 C30 38.5 36 38.5 39 30 L44 30 L44 44 L2 44 Z" fill="#191b22"/>
-      <path d="M27 30 C30 38.5 36 38.5 39 30 Z" fill="#05060a"/>
-      <circle cx="33" cy="33.2" r="1.25" fill="#9fd3ff"/>
-      <path d="M2 30 L14 30 L21 22.5 L27 30 C30 38.5 36 38.5 39 30 L44 30" fill="none" stroke="#d6d6dc" stroke-width="1.5" stroke-linejoin="round"/>
-    </svg>
-    <span class="wt-txt"><span class="wt-k">Why the south pole</span><span class="wt-h"><span class="wt-long">Ridges in near-constant sunlight, crater floors cold enough to keep ice for billions of years, and hills that decide whether a lander can talk to Earth.</span><span class="wt-short">Sunlit ridges, ice-cold craters, hills that block Earth.</span></span></span>
-    <span class="wt-go" aria-hidden="true">›</span>
-  </button>
+  <p class="lede">There the Sun barely rises and Earth hides behind the mountains, so a lander that touches down on the wrong day loses power or contact. moonseal shows the good days to land, from NASA data, and seals what you find in public on Solana.</p>
   <div class="chips" id="heroChips"></div>
+  <button class="why-link" id="heroWhy" type="button" aria-haspopup="dialog">Why the south pole? <span aria-hidden="true">›</span></button>
   <div class="hero-foot">Sunlight shown for <b id="heroWhen">…</b>, from JPL Horizons. Terrain: LRO LOLA. Color: LRO LROC.</div>
 </section>
 

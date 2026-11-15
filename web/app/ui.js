@@ -107,17 +107,13 @@
 
   /* ---------------------------------------------------------------- hero */
   function hero() {
-    // one obvious first step (the headline site, NASA's Connecting Ridge), then the two other ways in
+    // one first action: choose a site from the ranked list (step 1)
     $('#heroChips').innerHTML =
-      '<button class="chip primary" id="heroGo">Good days to land ›</button>' +
-      '<button class="chip" id="heroAll">Rank the sites</button>' +
-      '<button class="chip pqchip" id="heroSeal"><span class="pq-dot"></span>Seal a site on Solana</button>';
+      '<button class="chip primary" id="heroGo">Choose a landing site ›</button>';
     $('#heroWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };   // the one entry to the sheet
     $('#heroChips').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
-      if (b.id === 'heroAll') return openPicker();
-      if (b.id === 'heroSeal') { var top = rankSites()[0].s; selectSite(top); return openSeal(top); }
-      if (b.id === 'heroGo') selectSite(SITES.find(function (x) { return x.id === 'connecting_ridge'; }));
+      if (b.id === 'heroGo') goStep(1);
     });
   }
   function showHero(on) {
@@ -127,7 +123,6 @@
   /* ---------------------------------------------------------------- views */
   function setView(v) {
     state.view = v;
-    document.querySelectorAll('#bar .seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.view === v)); });
     if (v === 'hero') { Globe.view('hero'); showHero(!state.site); }
     else if (v === 'earth') { Globe.view('earth'); showHero(false); toast('The Moon from Earth. Press play: the south pole tips toward you and away (libration).'); }
     else if (v === 'pole') { Globe.view('pole'); showHero(false); }
@@ -154,6 +149,7 @@
     if (!opt.noFly) setView('site');
     pins.forEach(function (p) { p.el.classList.toggle('sel', p.site === s); });
     closePicker();
+    updateSteps(2);
     saveHash();
     rebuildTimeline();
     scheduleLive();
@@ -162,7 +158,7 @@
     state.lastSite = state.site; state.site = null; $('#panel').hidden = true;
     Globe.setSiteTile(null);
     pins.forEach(function (p) { p.el.classList.remove('sel'); });
-    setView('hero'); rebuildTimeline(); saveHash();
+    setView('hero'); updateSteps(0); rebuildTimeline(); saveHash();
   }
 
   /* ---------------------------------------------------------------- panel */
@@ -186,11 +182,12 @@
         '<p class="hint">On the timeline below, <b>green</b> marks every good time to land. Press ▶ to watch the Sun and Earth move.</p>' +
         '<button class="btn wide pq seal-cta" id="cmdOpen"><span class="pq-dot"></span>Seal this site on Solana</button>' +
       '</div>' +
+      '<details class="more"><summary>More details</summary>' +
       '<div class="sect"><h3 style="display:flex;align-items:center">The view from the site' + (s.terrain ? '<button class="btn" id="standBtn" style="margin-left:auto;padding:6px 11px;font-size:.78rem;text-transform:none;letter-spacing:0">Stand here</button>' : '') + '</h3><canvas id="skyline"></canvas>' +
         '<div class="cap">' + (s.terrain ? 'The grey line is the real horizon seen from this spot, from NASA LOLA terrain. The Sun or Earth is up when it clears that line.' : 'Outside the south-pole terrain map: this site uses a flat horizon.') + '</div></div>' +
       '<div class="sect"><h3>Other sites, same dates</h3><div class="cmp-list" id="cmp"></div></div>' +
       moondaoCard(s) +
-      '<details class="more"><summary>More details</summary>' +
+        '<div class="sect"><button class="btn" id="mapToggle">Show sunlight and Earth on the map</button></div>' +
         '<div class="sect"><h3 id="nowHead">Right now</h3><div class="cards">' +
           '<div class="card sun" id="cSun"><div class="k"><i></i>Sun</div><div class="v num" id="sunEl">…</div><div class="s" id="sunTxt">…</div><div class="s dim" id="sunSub"></div></div>' +
           '<div class="card earth" id="cEarth"><div class="k"><i></i>Earth</div><div class="v num" id="earEl">…</div><div class="s" id="earTxt">…</div><div class="s dim" id="earSub"></div></div>' +
@@ -205,6 +202,9 @@
         '<div class="cap" style="margin-top:14px">' + src + '</div>' +
       '</details>';
     $('#closeSite').onclick = closeSite;
+    var mapTxt = function () { return state.overlay ? 'Hide the sunlight and Earth map' : 'Show sunlight and Earth on the map'; };
+    var mt = $('#mapToggle'); if (mt) { mt.textContent = mapTxt(); mt.onclick = function () { $('#mapBtn').click(); mt.textContent = mapTxt(); }; }
+    var more = $('#panelBody .more'); if (more) more.addEventListener('toggle', function () { if (more.open) scheduleLive(); });   // the skyline draws at its real size
     if (window.FieldGuide) FieldGuide.mount($('#panelBody'), s);
     var tm = $('#toMbz'); if (tm) tm.onclick = function () { selectSite(SITES.find(function (x) { return x.id === 'moon_base_zero'; })); };
     var sb = $('#standBtn');
@@ -627,12 +627,23 @@
       found_utc: new Date().toISOString().slice(0, 19) + 'Z'
     };
   }
-  function openSeal(s) { if (window.Seal) Seal.open(sealFinding(s)); }
+  function openSeal(s) { if (window.Seal) { Seal.open(sealFinding(s)); updateSteps(3); } }
+  /* Three steps, one at a time: 1 choose a site (the ranked list), 2 when to land (the site's answer), 3 seal it. */
+  function updateSteps(n) { document.querySelectorAll('#bar .seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.step === n)); }); }
+  function goStep(n) {
+    if (window.Seal) Seal.close();
+    if (n === 1) { if (state.view === 'hero' && !state.site) setView('pole'); openPicker(); return; }
+    closePicker();
+    if (!state.site) { openPicker(); toast('Choose a site first'); return; }
+    if (n === 2) { setView('site'); updateSteps(2); } else openSeal(state.site);
+  }
+  function home() { if (window.Seal) Seal.close(); closePicker(); if (state.site) closeSite(); else setView('hero'); updateSteps(0); }
+
   function openPicker() {
     var groups = {};
     SITES.forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
     var rk = rankSites();
-    var html = '<div class="grp">South-pole sites, ranked</div>' +
+    var html = '<div class="grp">Step 1 · Choose a landing site</div>' +
       '<div class="rank-note">Ranked on power, water and radio, each counting the same. <b class="sun">Sunlight</b> and <b class="earth">Earth in view</b>: share of every hour in 2026 and 2027, from NASA JPL Horizons and LRO LOLA terrain. ' +
       '<b class="ice">Ice</b>: where water ice can last, from LRO Diviner: under the site, or the distance to the nearest cold trap.</div>' +
       '<div class="rank-h"><span>#</span><span>Site</span><span class="sun">Sunlight</span><span class="ice">Ice</span><span class="earth">Earth</span></div>' +
@@ -652,7 +663,7 @@
     html += '<div class="grp">Your own coordinates</div><div class="custom"><input id="cLat" inputmode="decimal" placeholder="Lat (−89.5)" aria-label="Latitude"><input id="cLon" inputmode="decimal" placeholder="Lon E (222.7)" aria-label="Longitude east"><button class="btn" id="cGo">Go</button></div>' +
       '<div class="hint">Or tap anywhere on the Moon. Inside 75°S the skyline is ray-cast from LOLA terrain in your browser.</div>';
     $('#pickerBody').innerHTML = html;
-    $('#picker').hidden = false;
+    $('#picker').hidden = false; updateSteps(1);
     $('#pickerBody').onclick = function (e) {
       var b = e.target.closest('.site-row, .rank-row'); if (b) selectSite(SITES.find(function (x) { return x.id === b.dataset.id; }));
     };
@@ -662,7 +673,7 @@
       closePicker(); dropPin(la, ((lo % 360) + 360) % 360);
     };
   }
-  function closePicker() { $('#picker').hidden = true; }
+  function closePicker() { $('#picker').hidden = true; updateSteps(state.site ? 2 : 0); }
 
   /* ---------------------------------------------------------------- about */
   function openAbout() {
@@ -728,12 +739,9 @@
 
   /* ---------------------------------------------------------------- wiring */
   function wire() {
-    document.querySelectorAll('#bar .seg button').forEach(function (b) {
-      b.onclick = function () {
-        if (b.dataset.view === 'command') { if (state.site) openSeal(state.site); else { openPicker(); toast('Pick a site, then seal it'); } return; }
-        setView(b.dataset.view);
-      };
-    });
+    document.querySelectorAll('#bar .seg button').forEach(function (b) { b.onclick = function () { goStep(+b.dataset.step); }; });
+    $('#homeBtn').onclick = home;
+    document.addEventListener('moonseal:sealclose', function () { updateSteps(state.site ? 2 : 0); });
     $('#sitesBtn').onclick = function () { $('#picker').hidden ? openPicker() : closePicker(); };
     $('#aboutBtn').onclick = openAbout;
     $('#about').onclick = function (e) { if (e.target.id === 'about') closeAbout(); };

@@ -62,7 +62,7 @@ window.Seal = (function () {
     $('#seal').style.display = 'grid';
     setTimeout(function () { sign().catch(function (e) { toast('Error: ' + e.message); }); }, 30);
   }
-  function close() { $('#seal').style.display = 'none'; }
+  function close() { var was = $('#seal').style.display === 'grid'; $('#seal').style.display = 'none'; if (was) document.dispatchEvent(new CustomEvent('moonseal:sealclose')); }
 
   async function sign() {
     var k = myKey(), t0 = performance.now();

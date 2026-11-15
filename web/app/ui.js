@@ -562,6 +562,8 @@
     var host = $('#pins');
     SITES.forEach(function (s) { addPin(s, host); });
     Globe.on('frame', placePins);
+    // a GPU the render budget had to step down: drop the glass blur too (app.css html.lowfx), for the session
+    Globe.on('budget', function (q) { if (q.low) document.documentElement.classList.add('lowfx'); });
   }
   function addPin(s, host) {
     var el = document.createElement('button');

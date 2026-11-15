@@ -17,6 +17,8 @@
  *   pick(clientX, clientY) -> {lat, lon} | null
  *   project(lat, lon, hKm) -> {x, y, front}
  *   on('tap'|'frame'|'ready', cb)      info() -> {moonIllum, earthIllum, sun, earth}
+ *   quality() -> {hq, lq, ms, timer}   render-budget levels (budget.js) and the last measured frame cost
+ *   on('budget', cb)                   the levels changed: {hq, lq, low}
  */
 window.Globe = (function () {
   'use strict';
@@ -42,6 +44,15 @@ window.Globe = (function () {
     } catch (e) { return false; }
   })();
   var dpr = Math.min(window.devicePixelRatio || 1, LITE ? 1.5 : 2);
+  /* Render budget (budget.js): measured frame costs step resolution and shadow steps down on a GPU that cannot
+     keep up. Desktops start at the full settings, phones at their lighter ones. ?q=0..3 pins both levels;
+     ?shot (frame capture for the videos, software rendering) pins the starting levels so captures stay sharp. */
+  var B = (function () {
+    var f = /[?&]q=([0-3])/.exec(location.search), hq = LITE ? 2 : 0, lq = LITE ? 1 : 0;
+    if (f) return RenderBudget({ hq: +f[1], lq: +f[1], forced: true });
+    return RenderBudget({ hq: hq, lq: lq, lqMin: lq, forced: /[?&]shot\b/.test(location.search) });
+  })();
+  var HQ0 = B.hq, LQ0 = B.lq;
 
   /* ------------------------------------------------------------------ shaders */
   var COMMON = [
@@ -203,16 +214,17 @@ window.Globe = (function () {
     '  vec3 V = normalize(cameraPosition - vPos);',
     '  float edge = 1.0 - smoothstep(400.0, 452.0, rho);    // cast shadows fade at the data edge',
     '  float mu0 = dot(n, uSun), mu = max(dot(n, V), 0.0);',
+    '  vec3 P = vPos + up*0.01;                             // a 10 m mast: is the body above the horizon?',
+    '  // with the map on, the Sun march from the mast also shades the ground: one march fewer per pixel',
+    '  float sUp = uOverlay > 0.5 && dot(up, uSun) > -0.095 ? march(P, uSun, 0.004660) : 0.0;',
     '  float sunV = 0.0;',
-    '  if (mu0 > 0.0 && dot(up, uSun) > -0.095) sunV = mix(1.0, march(vPos + n*0.015, uSun, 0.004660), edge);',
+    '  if (mu0 > 0.0 && dot(up, uSun) > -0.095) sunV = mix(1.0, uOverlay > 0.5 ? sUp : march(vPos + n*0.015, uSun, 0.004660), edge);',
     '  sunV *= smoothstep(-0.095, -0.06, dot(up, uSun));',
     '  vec3 Ev = uEarth - vPos; float eD = length(Ev); vec3 Ed = Ev / eD;',
     '  float es = uEarthPhase * max(dot(n, Ed), 0.0);',
     '  vec3 col = alb * (lunar(max(mu0, 0.0), mu) * sunV * uSunI + es * uEarthI * EARTHLIGHT);',
     '  vec3 shaded = outColor(col);',
     '  if (uOverlay > 0.5){',
-    '    vec3 P = vPos + up*0.01;                           // a 10 m mast: is the body above the horizon?',
-    '    float sUp = dot(up, uSun) > -0.095 ? march(P, uSun, 0.004660) : 0.0;',
     '    float eUp = dot(up, Ed) > -0.095 ? march(P, Ed, 6371.0/eD) : 0.0;',
     '    vec3 NONE = vec3(0.035, 0.04, 0.06), SUNC = vec3(1.0, 0.60, 0.16), EARC = vec3(0.20, 0.52, 1.0), BOTH = vec3(0.42, 1.0, 0.62);',
     '    vec3 oc = mix(mix(NONE, EARC, eUp), mix(SUNC, BOTH, eUp), sUp);',
@@ -698,17 +710,51 @@ window.Globe = (function () {
 
   /* ------------------------------------------------------------------ loop */
   function quality(hq) {
-    // idle frames are supersampled (>= 1.6x even on 1x screens, capped at 2x): crisper shadow edges and
-    // crater detail; interaction drops to <= 1.25x so dragging and playback stay fluid
-    // phones: no supersampling, 1x while moving; fewer, longer shadow steps that reach about as far
-    var pr = LITE ? (hq ? dpr : Math.min(dpr, 1)) : (hq ? Math.min(2, Math.max(dpr, 1.6)) : Math.min(dpr, 1.25));
+    // Still frames (hq), by budget level: 0 supersamples (>= 1.6x even on 1x screens, capped at 2x) for crisper
+    // shadow edges and crater detail; 1 renders at the screen's own ratio; 2 also takes fewer, longer shadow
+    // steps that reach about as far; 3 renders at 1x. Moving frames (lq): 0 is <= 1.25x; 1 is 1x with the
+    // longer steps; 2 and 3 render at 0.75x and 0.5x and let the browser scale up. A desktop at 0/0 and a
+    // phone at 2/1 get exactly the settings each had before the budget existed.
+    var l = hq ? B.hq : B.lq, pr, full;
+    if (hq) { pr = l === 0 ? Math.min(2, Math.max(dpr, 1.6)) : l === 1 ? Math.min(dpr, 2) : l === 2 ? Math.min(dpr, 1.5) : Math.min(dpr, 1); full = l < 2; }
+    else { pr = l === 0 ? Math.min(dpr, 1.25) : Math.min(dpr, 1) * (l === 1 ? 1 : l === 2 ? 0.75 : 0.5); full = l === 0; }
     if (renderer.getPixelRatio() !== pr) { renderer.setPixelRatio(pr); renderer.setSize(canvas.clientWidth, canvas.clientHeight, false); }
-    if (capMat) { capMat.uniforms.uSteps.value = LITE ? (hq ? 110 : 48) : (hq ? 190 : 64); capMat.uniforms.uGrow.value = LITE ? (hq ? 1.08 : 1.14) : (hq ? 1.045 : 1.095); }
-    sphereMat.uniforms.uSteps2.value = LITE ? (hq ? 40 : 18) : (hq ? 64 : 26); sphereMat.uniforms.uGrow2.value = LITE ? (hq ? 1.13 : 1.32) : (hq ? 1.08 : 1.2);
+    if (capMat) { capMat.uniforms.uSteps.value = hq ? (full ? 190 : 110) : (full ? 64 : 48); capMat.uniforms.uGrow.value = hq ? (full ? 1.045 : 1.08) : (full ? 1.095 : 1.14); }
+    sphereMat.uniforms.uSteps2.value = hq ? (full ? 64 : 40) : (full ? 26 : 18); sphereMat.uniforms.uGrow2.value = hq ? (full ? 1.08 : 1.13) : (full ? 1.2 : 1.32);
+  }
+  /* GPU time of each frame, from EXT_disjoint_timer_query_webgl2 (results arrive a frame or two later), fed to
+     the budget. gq: null until the first frame, false when the browser has no GPU timer. */
+  var gq = null, lastMotion = false, lastChange = 0, lastTickDirty = false, seenQ = '';
+  function gpuBegin() {
+    if (gq === null) { var ext = renderer.getContext().getExtension('EXT_disjoint_timer_query_webgl2'); gq = ext ? { ext: ext, pend: [] } : false; }
+    if (!gq || gq.pend.length > 8) return null;            // results not coming back: stop asking
+    var gl = renderer.getContext(), q = gl.createQuery();
+    gl.beginQuery(gq.ext.TIME_ELAPSED_EXT, q);
+    return q;
+  }
+  function gpuEnd(q, hq) {
+    if (!q) return;
+    renderer.getContext().endQuery(gq.ext.TIME_ELAPSED_EXT);
+    gq.pend.push({ q: q, hq: hq });
+  }
+  function gpuPoll() {
+    if (!gq || !gq.pend.length) return;
+    var gl = renderer.getContext(), disjoint = gl.getParameter(gq.ext.GPU_DISJOINT_EXT);   // reading it also clears it
+    while (gq.pend.length && gl.getQueryParameter(gq.pend[0].q, gl.QUERY_RESULT_AVAILABLE)) {
+      var p = gq.pend.shift();
+      if (!disjoint) B.sample(gl.getQueryParameter(p.q, gl.QUERY_RESULT) / 1e6, p.hq);
+      gl.deleteQuery(p.q);
+    }
   }
   function frame(now) {
     requestAnimationFrame(frame);
-    var dt = Math.min(0.05, (now - (lastT || now)) / 1000); lastT = now;
+    var gap = now - (lastT || now), dt = Math.min(0.05, gap / 1000); lastT = now;
+    gpuPoll();
+    if (seenQ !== B.hq + '/' + B.lq) {
+      seenQ = B.hq + '/' + B.lq;
+      // low: the budget stepped down to the lighter levels (moving frames below 1x, or still frames off full steps)
+      emit('budget', { hq: B.hq, lq: B.lq, low: (B.lq >= 2 && B.lq > LQ0) || (B.hq >= 2 && B.hq > HQ0) });
+    }
     var moving = false;
     allSprings.forEach(function (s) { if (s.step(dt)) moving = true; });
     if (momentum) {
@@ -719,15 +765,26 @@ window.Globe = (function () {
       moving = true;
     }
     if (moving) dirty = true;
-    var busy = interacting || moving || Globe.playing;
-    if (!dirty && !(hqPending && !busy)) return;
+    var motion = interacting || moving || Globe.playing;
+    // a change on consecutive frames or within 200 ms of the previous one (scrubbing the timeline, a held arrow
+    // key) is drawn light, like motion, and the full-quality frame waits until changes have stopped for 200 ms.
+    // "Consecutive" matters on a slow GPU: there every frame is 200 ms apart and would never count as rapid.
+    var rapid = dirty && (lastTickDirty || now - lastChange < 200);
+    lastTickDirty = dirty;
+    if (dirty) { lastChange = now; if (rapid) hqPending = true; }
+    var busy = motion || rapid;
+    if (!dirty && !(hqPending && !busy && now - lastChange >= 200)) { lastMotion = false; return; }
     var hq = !busy;
+    if (gq === false && motion && lastMotion) B.sample(gap, false, true);   // no GPU timer: the frame interval
+    lastMotion = motion;
     quality(hq);
     if (hq) hqPending = false;
     applyCamera(); keepAboveGround(); updateSky();
     var e = rig.exp.x;
     sphereMat.uniforms.uExposure.value = e; if (capMat) capMat.uniforms.uExposure.value = e;
+    var q = gpuBegin();
     renderer.render(scene, camera);
+    gpuEnd(q, hq);
     dirty = false;
     emit('frame', { hq: hq });
   }
@@ -841,6 +898,7 @@ window.Globe = (function () {
     pick: pick, project: project, on: on, info: info, demHeightKm: demHeightKm,
     dem: function () { return { full: demFull, inner: demInner }; },
     invalidate: function () { dirty = true; hqPending = true; },
+    quality: function () { return { hq: B.hq, lq: B.lq, ms: B.last, timer: gq ? 'gpu' : gq === false ? 'wall' : 'pending' }; },
     lite: LITE,
     playing: false
   };

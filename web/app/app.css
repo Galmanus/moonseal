@@ -280,6 +280,13 @@ button { font: inherit; color: inherit; }
 }
 #panel .grab { display: none; width: 40px; height: 5px; border-radius: 3px; background: rgba(255,255,255,.3); margin: 8px auto 0; flex: none; }
 
+/* ---------- a GPU that cannot keep up (globe.js render budget stepped down; ui.js adds html.lowfx) ----------
+   backdrop blur is redone by the compositor on every frame the Moon moves: on an Intel HD 620, turning it off
+   raised the frame rate by 16-21%. The panels keep their tint, more opaque so the Moon behind stays quiet. */
+html.lowfx * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html.lowfx { --mat: rgba(20, 20, 22, 0.9); }
+html.lowfx #panel { background: rgba(12, 12, 14, 0.94); }
+
 /* ---------- accessibility preferences ---------- */
 @media (prefers-reduced-transparency: reduce) {
   .glass { background: #141416; -webkit-backdrop-filter: none; backdrop-filter: none; }

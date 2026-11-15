@@ -624,8 +624,9 @@
   function saveHash() {
     var p = [];
     if (state.site && state.site.id !== 'pin') p.push('site=' + state.site.id);
-    p.push('t=' + Math.round(state.t));
-    history.replaceState(null, '', '#' + p.join('&'));
+    // a site, or a time other than now, is worth sharing; the opening screen at the current time keeps a clean address
+    if (p.length || state.tNow == null || Math.abs(state.t - state.tNow) >= 1) p.push('t=' + Math.round(state.t));
+    history.replaceState(null, '', p.length ? '#' + p.join('&') : location.pathname + location.search);
   }
   function readHash() {
     var q = {}; location.hash.slice(1).split('&').forEach(function (kv) { var a = kv.split('='); if (a[0]) q[a[0]] = decodeURIComponent(a[1] || ''); });
@@ -691,6 +692,7 @@
     hero(); wire(); initTimeline(); makePins();
     var q = readHash();
     var now = LunarEphem.hoursSinceT0(new Date());
+    state.tNow = clampT(now);
     state.t = clampT(q.t != null && q.t !== '' ? +q.t : now);
     Globe.init($('#moon'), { preserve: /[?&]shot\b/.test(location.search) }).then(function (r) {
       Globe.setTime(state.t);

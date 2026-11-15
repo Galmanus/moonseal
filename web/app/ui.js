@@ -184,8 +184,8 @@
         '<button class="btn wide pq seal-cta" id="cmdOpen"><span class="pq-dot"></span>Seal this site on Solana</button>' +
       '</div>' +
       '<details class="more"><summary>More details</summary>' +
-      '<div class="sect"><h3 style="display:flex;align-items:center">The view from the site' + (s.terrain ? '<button class="btn" id="standBtn" style="margin-left:auto;padding:6px 11px;font-size:.78rem;text-transform:none;letter-spacing:0">Stand here</button>' : '') + '</h3><canvas id="skyline"></canvas>' +
-        '<div class="cap">' + (s.terrain ? 'The grey line is the real horizon seen from this spot, from NASA LOLA terrain. The Sun or Earth is up when it clears that line.' : 'Outside the south-pole terrain map: this site uses a flat horizon.') + '</div></div>' +
+      '<div class="sect"><h3 class="sky-h">The view from the site<span class="sky-btns"><button class="btn" id="skyBigBtn">Enlarge</button>' + (s.terrain ? '<button class="btn" id="standBtn">Stand here</button>' : '') + '</span></h3><canvas id="skyline" title="Enlarge"></canvas><div class="sky-now" id="skyNow"></div>' +
+        '<div class="cap">' + (s.terrain ? 'The grey line is the real horizon seen from this spot, from NASA LOLA terrain, all the way around, facing Earth. The Sun or Earth is up when it clears that line.' : 'Outside the south-pole terrain map: this site uses a flat horizon.') + '</div></div>' +
       '<div class="sect"><h3>Other sites, same dates</h3><div class="cmp-list" id="cmp"></div></div>' +
       moondaoCard(s) +
         '<div class="sect"><button class="btn" id="mapToggle">Show sunlight and Earth on the map</button></div>' +
@@ -209,6 +209,8 @@
     var more = $('#panelBody .more'); if (more) more.addEventListener('toggle', function () { if (more.open) scheduleLive(); });   // the skyline draws at its real size
     if (window.FieldGuide) FieldGuide.mount($('#panelBody'), s);
     var tm = $('#toMbz'); if (tm) tm.onclick = function () { selectSite(SITES.find(function (x) { return x.id === 'moon_base_zero'; })); };
+    var bb = $('#skyBigBtn'); if (bb) bb.onclick = openSkyBig;
+    var sk = $('#skyline'); if (sk) sk.onclick = openSkyBig;
     var sb = $('#standBtn');
     if (sb) sb.onclick = function () {
       var ground = sb.dataset.on === '1';
@@ -295,69 +297,120 @@
   }
 
   /* ---------------------------------------------------------------- skyline */
+  /* The view from the site: a 360-degree panorama facing Earth, the real LOLA skyline, the Sun and Earth where they are now,
+     where they go next, and a plain line saying what it means. Heights are stretched so the hills show; the stretch is
+     written on the picture. drawSkyline(a) paints the panel's view and, when it is open, the enlarged one. */
   function drawSkyline(a) {
-    var cv = $('#skyline'); if (!cv) return;
+    paintSkyline($('#skyline'), a, false);
+    var big = $('#skyBig');
+    if (big && big.style.display === 'grid') paintSkyline($('#skylineBig'), a, true);
+    var now = $('#skyNow'); if (now) now.innerHTML = skyNowHtml();
+    var nowBig = $('#skyNowBig'); if (nowBig && big && big.style.display === 'grid') nowBig.innerHTML = skyNowHtml();
+  }
+  function skyNowHtml() {
+    var m = state.model, t = state.t, sm = Model.at(m.sunM, t), em = Model.at(m.earM, t);
+    var line = function (cls, name, margin, yes, no) {
+      return '<span class="sk ' + cls + (margin > 0 ? '' : ' off') + '"><i></i><b>' + name + '</b> ' + (margin > 0
+        ? Math.abs(margin).toFixed(1) + '° above the skyline · ' + yes
+        : 'hidden, ' + Math.abs(margin).toFixed(1) + '° below the skyline · ' + no) + '</span>';
+    };
+    return line('sun', 'Sun', sm, 'power', 'no sunlight') + line('earth', 'Earth', em, 'radio to Earth', 'no radio');
+  }
+  function paintSkyline(cv, a, big) {
+    if (!cv) return;
     var dpr = Math.min(window.devicePixelRatio || 1, 2), W = cv.clientWidth, H = cv.clientHeight;
-    if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    if (!W || !H) return;
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
     var c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, W, H);
-    var s = state.site, hz = s.horizon_deg && s.horizon_deg.length ? s.horizon_deg : null;
-    var center = a.earthAz, t = state.t;
-    var hmin = hz ? Math.min.apply(null, hz) : 0, hmax = hz ? Math.max.apply(null, hz) : 0;
-    var y0 = Math.min(-3, hmin - 1, a.earthEl - 2, a.sunEl - 1), y1 = Math.max(9, hmax + 2, a.earthEl + 2, a.sunEl + 2);
-    y0 = Math.max(y0, -12); y1 = Math.min(y1, 40);
+    var s = state.site, m = state.model, t = state.t, hz = s.horizon_deg && s.horizon_deg.length ? s.horizon_deg : (m && m.hz) || null;
+    var ff = getComputedStyle(document.body).fontFamily, center = a.earthAz;
+    var hmin = hz ? Math.min.apply(null, Array.from(hz)) : 0, hmax = hz ? Math.max.apply(null, Array.from(hz)) : 0;
+    // the range also holds where Earth is in 7 days and the Sun in 3, so the ends of their paths stay on the picture
+    var e7 = LunarEphem.azel(s.lat, s.lon, clampT(t + 168), s.elev_m || 0) || a, s3 = LunarEphem.azel(s.lat, s.lon, clampT(t + 72), s.elev_m || 0) || a;
+    var y0 = Math.min(-2, hmin - 0.6, a.earthEl - 1.4, a.sunEl - 1, e7.earthEl - 1, s3.sunEl - 1), y1 = Math.max(4, hmax + 1.2, a.earthEl + 1.8, a.sunEl + 1.4, e7.earthEl + 1.2, s3.sunEl + 1.2);
+    y0 = Math.max(Math.floor(y0), -12); y1 = Math.min(Math.ceil(y1), 30);
+    var padT = big ? 30 : 22, padB = big ? 30 : 22, plotH = H - padT - padB;
     function X(az) { var d = ((az - center + 540) % 360) - 180; return W / 2 + d / 360 * W; }
-    function Y(el) { return H - 16 - (el - y0) / (y1 - y0) * (H - 24); }
-    var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#05060a'); g.addColorStop(1, '#0d1018');
+    function Y(el) { return padT + (y1 - el) / (y1 - y0) * plotH; }
+    function hzAt(az) { return hz ? hz[Math.floor(((az % 360) + 360) % 360 / (360 / hz.length)) % hz.length] : 0; }
+    // sky, and a quiet elevation grid in whole degrees
+    var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#03040a'); g.addColorStop(1, '#0c1019');
     c.fillStyle = g; c.fillRect(0, 0, W, H);
-    // tracks: Earth +-7 days, Sun next 3 days
-    function track(fn, h0, h1, color) {
-      c.strokeStyle = color; c.lineWidth = 1.2; c.setLineDash([2, 3]); c.beginPath();
-      var prevX = null;
+    var step = (y1 - y0) > 12 ? 4 : (y1 - y0) > 6 ? 2 : 1;
+    c.font = '500 ' + (big ? 11 : 9.5) + 'px ' + ff; c.textAlign = 'right';
+    for (var gy = Math.ceil(y0 / step) * step; gy <= y1; gy += step) {
+      c.strokeStyle = gy === 0 ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.06)'; c.lineWidth = 1;
+      c.beginPath(); c.moveTo(0, Y(gy) + .5); c.lineTo(W, Y(gy) + .5); c.stroke();
+      c.fillStyle = 'rgba(255,255,255,.32)'; c.fillText((gy > 0 ? '+' : '') + gy + '°', W - 4, Y(gy) - 3);
+    }
+    // where they go next: the Sun over the next 3 days, Earth over two weeks around now
+    function track(fn, h0, h1, color, width, label) {
+      c.strokeStyle = color; c.lineWidth = width; c.lineCap = 'round'; c.beginPath();
+      var prevX = null, end = null;
       for (var h = h0; h <= h1; h += 1) {
         var q = LunarEphem.azel(s.lat, s.lon, clampT(h), s.elev_m || 0); if (!q) continue;
         var v = fn(q), x = X(v.az), y = Y(v.el);
         if (prevX == null || Math.abs(x - prevX) > W / 2) c.moveTo(x, y); else c.lineTo(x, y);
-        prevX = x;
+        prevX = x; end = [x, y];
       }
-      c.stroke(); c.setLineDash([]);
+      c.stroke();
+      if (end && end[1] > padT - 2 && end[1] < H - padB + 2) {      // where it will be: a small mark and its name
+        c.fillStyle = color; c.beginPath(); c.arc(end[0], end[1], big ? 3 : 2.4, 0, 7); c.fill();
+        c.font = '500 ' + (big ? 11 : 9.5) + 'px ' + ff; c.textAlign = end[0] > W - 70 ? 'right' : 'left';
+        c.fillText(label, end[0] + (end[0] > W - 70 ? -6 : 6), end[1] + 3);
+      }
     }
-    track(function (q) { return { az: q.earthAz, el: q.earthEl }; }, t - 168, t + 168, 'rgba(94,177,255,.45)');
-    track(function (q) { return { az: q.sunAz, el: q.sunEl }; }, t, t + 72, 'rgba(255,179,64,.55)');
-    // terrain
+    // where they go next, forward only: Earth over the next 7 days, the Sun over the next 3
+    track(function (q) { return { az: q.earthAz, el: q.earthEl }; }, t, t + 168, 'rgba(94,177,255,.5)', big ? 2.2 : 1.6, 'Earth in 7 days');
+    track(function (q) { return { az: q.sunAz, el: q.sunEl }; }, t, t + 72, 'rgba(255,179,64,.55)', big ? 2.2 : 1.6, 'Sun in 3 days');
+    // the ground: the real skyline from LOLA, lit along its edge
     c.beginPath(); c.moveTo(0, H);
-    for (var i = 0; i <= W; i += 1) {
-      var az = center - 180 + i / W * 360, hv = hz ? hz[Math.floor(((az % 360) + 360) % 360) % 360] : 0;
-      c.lineTo(i, Y(hv));
-    }
+    for (var i = 0; i <= W; i += 1) c.lineTo(i, Y(hzAt(center - 180 + i / W * 360)));
     c.lineTo(W, H); c.closePath();
-    var tg = c.createLinearGradient(0, Y(hmax), 0, H); tg.addColorStop(0, '#3a3a40'); tg.addColorStop(1, '#141418');
+    var tg = c.createLinearGradient(0, Y(hmax), 0, H); tg.addColorStop(0, '#3b3c43'); tg.addColorStop(1, '#101114');
     c.fillStyle = tg; c.fill();
-    c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 1; c.beginPath();
-    for (var k = 0; k <= W; k += 1) {
-      var az2 = center - 180 + k / W * 360, hv2 = hz ? hz[Math.floor(((az2 % 360) + 360) % 360) % 360] : 0;
-      if (k === 0) c.moveTo(k, Y(hv2)); else c.lineTo(k, Y(hv2));
-    }
+    c.strokeStyle = 'rgba(235,235,240,.75)'; c.lineWidth = big ? 1.4 : 1.1; c.beginPath();
+    for (var k = 0; k <= W; k += 1) { var yk = Y(hzAt(center - 180 + k / W * 360)); if (k === 0) c.moveTo(k, yk); else c.lineTo(k, yk); }
     c.stroke();
-    // zero-elevation reference
-    c.strokeStyle = 'rgba(255,255,255,.12)'; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(0, Y(0)); c.lineTo(W, Y(0)); c.stroke(); c.setLineDash([]);
-    // bodies (true angular size, min 3 px so they stay visible)
-    function body(az, el, radDeg, col, up, name) {
-      var x = X(az), y = Y(el), r = Math.max(3.2, radDeg / (y1 - y0) * (H - 24));
+    // the Sun and Earth now: a disc when up, an outline behind the hills when not
+    function body(az, el, col, up, name, minR) {
+      var x = X(az), y = Y(el), r = minR;
       c.save();
-      if (up) { c.shadowColor = col; c.shadowBlur = 14; c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
-      else { c.strokeStyle = col; c.globalAlpha = .75; c.setLineDash([2, 2]); c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); }
+      if (up) { c.shadowColor = col; c.shadowBlur = big ? 22 : 14; c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }
+      else { c.strokeStyle = col; c.globalAlpha = .8; c.lineWidth = 1.4; c.setLineDash([3, 3]); c.beginPath(); c.arc(x, y, r, 0, 7); c.stroke(); }
       c.restore();
-      c.fillStyle = col; c.font = '600 10.5px ' + getComputedStyle(document.body).fontFamily; c.textAlign = 'center';
-      c.fillText(name + (up ? '' : ' (hidden)'), Math.max(30, Math.min(W - 30, x)), Math.max(11, y - r - 5));
+      var label = name + (up ? '' : ' · hidden');
+      c.font = '600 ' + (big ? 13 : 11) + 'px ' + ff; c.textAlign = 'center';
+      var tw = c.measureText(label).width, lx = Math.max(tw / 2 + 4, Math.min(W - tw / 2 - 4, x)), ly = Math.max(big ? 16 : 13, y - r - (big ? 10 : 7));
+      c.fillStyle = 'rgba(3,4,10,.72)'; c.fillRect(lx - tw / 2 - 5, ly - (big ? 12 : 10), tw + 10, big ? 17 : 14);
+      c.fillStyle = col; c.fillText(label, lx, ly);
     }
-    var m = state.model;
-    body(a.sunAz, a.sunEl, 0.267, '#ffb340', Model.at(m.sunM, t) > 0, 'Sun');
-    body(a.earthAz, a.earthEl, 0.95, '#5eb1ff', Model.at(m.earM, t) > 0, 'Earth');
-    // azimuth labels
-    c.fillStyle = 'rgba(255,255,255,.45)'; c.font = '600 10px ' + getComputedStyle(document.body).fontFamily; c.textAlign = 'center';
-    [['N', 0], ['E', 90], ['S', 180], ['W', 270]].forEach(function (p) { c.fillText(p[0], X(p[1]), H - 3); });
-    c.textAlign = 'left'; c.fillStyle = 'rgba(255,255,255,.35)';
-    c.fillText(y1.toFixed(0) + '°', 4, 11); c.fillText(y0.toFixed(0) + '°', 4, H - 18);
+    body(a.earthAz, a.earthEl, '#5eb1ff', Model.at(m.earM, t) > 0, 'Earth', big ? 9 : 6);
+    body(a.sunAz, a.sunEl, '#ffb340', Model.at(m.sunM, t) > 0, 'Sun', big ? 7 : 5);
+    // directions along the bottom, and the honest stretch
+    c.font = '600 ' + (big ? 12 : 10) + 'px ' + ff; c.textAlign = 'center'; c.fillStyle = 'rgba(255,255,255,.55)';
+    (big ? [['N', 0], ['NE', 45], ['E', 90], ['SE', 135], ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]] : [['N', 0], ['E', 90], ['S', 180], ['W', 270]])
+      .forEach(function (p) { c.fillText(p[0], X(p[1]), H - 8); });
+    var stretch = Math.round((plotH / (y1 - y0)) / (W / 360));
+    c.textAlign = 'left'; c.font = '500 ' + (big ? 11 : 9.5) + 'px ' + ff; c.fillStyle = 'rgba(255,255,255,.4)';
+    c.fillText('heights ×' + stretch + (big ? ' so the hills show · facing Earth' : ''), 6, big ? 18 : 13);
+  }
+  function openSkyBig() {
+    var host = $('#skyBig');
+    if (!host) {
+      host = document.createElement('div'); host.id = 'skyBig'; host.setAttribute('role', 'dialog'); host.setAttribute('aria-modal', 'true'); host.setAttribute('aria-label', 'The view from the site');
+      host.innerHTML = '<div class="sky-sheet glass glass-strong"><div class="sky-head"><div><div class="eyebrow">The view from the site</div><h2 id="skyBigTitle"></h2></div>' +
+        '<button class="icon-btn" id="skyBigClose" aria-label="Close">✕</button></div><canvas id="skylineBig"></canvas><div class="sky-now big" id="skyNowBig"></div>' +
+        '<p class="sky-cap">The grey line is the real horizon seen from this spot, from NASA LOLA terrain, all the way around. The Sun or Earth is up when its centre clears that line. ' +
+        'The faint lines show where they go next: Earth over the next 7 days, the Sun over the next 3. Heights are stretched so the hills show; the angles on the right are true.</p></div>';
+      document.body.appendChild(host);
+      $('#skyBigClose').onclick = function () { host.style.display = 'none'; };
+      host.addEventListener('click', function (e) { if (e.target === host) host.style.display = 'none'; });
+      window.addEventListener('keydown', function (e) { if (e.key === 'Escape' && host.style.display === 'grid') host.style.display = 'none'; });
+    }
+    $('#skyBigTitle').textContent = state.site.name + ' · ' + dateStr(state.t);
+    host.style.display = 'grid';
+    scheduleLive();
   }
 
   /* ---------------------------------------------------------------- timeline */

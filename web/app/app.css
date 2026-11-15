@@ -164,7 +164,22 @@ button.brand { background: none; border: 0; padding: 0; color: inherit; font: in
 .card .s.dim { color: var(--fg2); font-weight: 400; }
 .card.down .v { color: var(--fg2); }
 
-#skyline { width: 100%; height: 150px; display: block; border-radius: var(--r-md); background: rgba(0,0,0,.35); }
+#skyline { width: 100%; height: 190px; display: block; border-radius: var(--r-md); background: #05060c; cursor: zoom-in; }
+.sky-h { display: flex; align-items: center; gap: 8px; }
+.sky-btns { margin-left: auto; display: inline-flex; gap: 6px; }
+.sky-btns .btn { padding: 6px 11px; font-size: .78rem; text-transform: none; letter-spacing: 0; }
+.sky-now { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 2px; font-size: .84rem; color: var(--fg2); }
+.sky-now .sk { display: flex; align-items: center; gap: 8px; } .sky-now .sk b { color: var(--fg); font-weight: 600; }
+.sky-now .sk i { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.sky-now .sun i { background: var(--sun); box-shadow: 0 0 8px var(--sun); } .sky-now .earth i { background: var(--earth); box-shadow: 0 0 8px var(--earth); }
+.sky-now .off i { background: transparent; box-shadow: none; border: 1.5px dashed currentColor; } .sky-now .sun.off i { color: var(--sun); } .sky-now .earth.off i { color: var(--earth); }
+.sky-now.big { flex-direction: row; flex-wrap: wrap; gap: 8px 22px; font-size: .95rem; margin-top: 14px; }
+#skyBig { position: fixed; z-index: 56; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.6); }
+.sky-sheet { width: min(1240px, calc(100vw - 24px)); max-height: calc(100vh - 32px); overflow-y: auto; border-radius: 26px; padding: 22px 24px 20px; }
+.sky-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; } .sky-head h2 { margin: 4px 0 0; font-size: clamp(1.3rem, 2.2vw, 1.8rem); letter-spacing: -0.02em; }
+.sky-head .icon-btn { margin-left: auto; }
+#skylineBig { width: 100%; height: min(440px, 52vh); display: block; border-radius: 18px; background: #05060c; }
+.sky-cap { margin: 12px 0 0; color: var(--fg2); font-size: .86rem; line-height: 1.5; max-width: 62em; }
 .cap { color: var(--fg3); font-size: .75rem; margin-top: 7px; line-height: 1.45; }
 
 .mission-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }

@@ -4,6 +4,8 @@
 
 NASA Space Apps Challenge 2026 · Challenge #11, Lunar Landing Site Navigator · Florianópolis, Brazil
 
+**Live site: [moonseal.vercel.app](https://moonseal.vercel.app)**
+
 ![moonseal: the opening screen, with the Moon lit by the real Sun on 21 May 2026 and the Why the south pole card](docs/img/hero.png)
 
 ## What it does

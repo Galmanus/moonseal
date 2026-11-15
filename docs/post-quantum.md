@@ -21,16 +21,16 @@ Open **Command** in `web/app.html`. The four stages on screen are the four steps
 
 1. **Operator signs.** The payload is `{v, site, cmd, counter, hour}`: the command, a monotonic counter and the planned hour. It is signed with ML-DSA-65; the signature is 3,309 bytes and the public key 1,952 bytes.
 2. **Encrypt for the lander.** ML-KEM-768 encapsulates a fresh shared secret to the lander's public key (1,184 bytes), producing a 1,088-byte ciphertext. The shared secret becomes an AES-256-GCM key that seals the payload and its signature. The uplink packet is about 4.5 KB, roughly five 1,024-byte telecommand frames, so in operations you would sign a plan rather than every command.
-3. **Relay through an untrusted ground station.** The station sees only ciphertext. Before relaying, it checks on Solana that the packet's hash is the one the base authorized. This step is where **Verify the ticket on Solana** runs.
+3. **Relay through an untrusted ground station.** The station sees only ciphertext. Before relaying, it checks on Solana that the packet's hash is the one the base authorized. This step is where **Check it on Solana** runs.
 4. **The lander checks, in order:**
 
 | Gate | Passes when | Fails in scenario |
 |---|---|---|
-| Line of sight to Earth | Earth is above the lander's skyline at the planned hour (the planner) | Send during a blackout |
-| Decrypt (ML-KEM-768 + AES-GCM) | The ciphertext opens with the lander's key and the GCM tag verifies | Tampered in transit |
-| Key attested by the operator's wallet (ed25519) | Only when a wallet is connected: the signing key is the one the wallet vouched for | (a wallet attested a different key) |
-| Signature (ML-DSA-65) | The signature verifies under the operator's key | Forged (unregistered key) |
-| Fresh counter | The counter is above the last accepted one | Replay an old packet |
+| Earth in view | Earth is above the lander's skyline at the planned hour (the planner) | Send while Earth is hidden |
+| Seal intact (ML-KEM-768 + AES-GCM) | The ciphertext opens with the lander's key and the GCM tag verifies | Changed on the way |
+| Key vouched for by the wallet (ed25519) | Only when a wallet is connected: the signing key is the one the wallet vouched for | (a wallet attested a different key) |
+| Signed by its own team (ML-DSA-65) | The signature verifies under the operator's key | Forged by an attacker |
+| Not a replay | The counter is above the last accepted one | Replay an old command |
 
 The command executes only if every gate passes. Each scenario fails at a different gate, which you can watch by switching the scenario buttons above **Sign & send**.
 

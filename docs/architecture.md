@@ -52,7 +52,7 @@ flowchart LR
 | `app/why-pole.js` | The "Why the south pole" explainer, with its sources and a live 2026 table |
 | `app/command.js` | The command pipeline: keys, signing, encryption, the lander's gates, the on-chain step |
 | `app/pq-bundle.js` | @noble/post-quantum 0.7.1 (ML-DSA-65, ML-KEM-768), pinned and bundled |
-| `app/moonseal-solana.js` | The Solana client (`solana/client/moonseal-onchain.mjs`), loaded only when you press "Verify the ticket on Solana" |
+| `app/moonseal-solana.js` | The Solana client (`solana/client/moonseal-onchain.mjs`), loaded only when you press "Check it on Solana" |
 | `app/wallet-bundle.js` | Mobile Wallet Adapter and Wallet Standard, loaded only when you press "Connect your Solana wallet" |
 | `app/onchain-config.js` | Networks to try (local validator, then devnet), program id, the demo base's registry, the demo operator seed |
 

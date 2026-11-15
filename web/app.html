@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>moonseal · land in the light, command with a post-quantum seal</title>
-<meta name="description" content="moonseal: compare lunar south-pole landing sites and dates (Sun up for power, Earth in view for direct contact) from real JPL Horizons ephemeris and LOLA terrain, then command the lander with a post-quantum seal: signed with ML-DSA-65 and verified by a Solana program.">
+<title>moonseal · lunar south-pole landing planner</title>
+<meta name="description" content="moonseal shows, hour by hour through 2026 and 2027, when a landing site at the Moon’s south pole gives a lander sunlight to charge and Earth in view to call home, from NASA JPL Horizons and LRO LOLA data, and makes sure only the lander’s own team can command it.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/svg+xml" href="app/brand/moonseal-favicon.svg">
 <link rel="stylesheet" href="app/app.css">
@@ -15,12 +15,12 @@
 <div id="pins" aria-live="off"></div>
 
 <header id="bar" class="glass">
-  <div class="brand"><img class="brand-mark" src="app/brand/moonseal-mark.svg" alt="" width="30" height="30">moonseal <small>· south pole · post-quantum</small></div>
+  <div class="brand"><img class="brand-mark" src="app/brand/moonseal-mark.svg" alt="" width="30" height="30">moonseal <small>· south-pole landing planner</small></div>
   <nav class="seg" aria-label="View">
     <button data-view="hero" aria-pressed="true">Moon</button>
     <button data-view="pole" aria-pressed="false">South Pole</button>
     <button data-view="site" aria-pressed="false">Site</button>
-    <button data-view="command" aria-pressed="false" title="Post-quantum command to the lander, gated by line of sight">Command</button>
+    <button data-view="command" aria-pressed="false" title="Send the lander a command only its own team could have signed">Command</button>
   </nav>
   <button class="when-chip" id="whenBtn" aria-label="Change date and time"><span class="dot"></span><span id="whenTxt" class="num">…</span></button>
   <button class="icon-btn" id="mapBtn" title="Map: where the Sun and Earth are above the horizon" aria-pressed="false"><span aria-hidden="true">◐</span><span class="ib-l">Map</span></button>
@@ -32,7 +32,7 @@
 <section id="hero" aria-labelledby="heroTitle">
   <div class="eyebrow">NASA Space Apps 2026 · Lunar Landing Site Navigator</div>
   <h1 id="heroTitle">Land where the <span class="sun">Sun</span> stays up and <span class="earth">Earth</span> stays in view.</h1>
-  <p class="lede">At the Moon’s south pole the Sun barely rises and Earth slips in and out of view. Pick a landing site and moonseal shows, hour by hour, when a lander there gets sunlight for power and sees Earth for radio, from real NASA data. Then send it a command with a post-quantum signature.</p>
+  <p class="lede">moonseal shows, hour by hour through 2026 and 2027, when a landing site at the Moon’s south pole gives a lander sunlight to charge and Earth in view to call home, from NASA data. Those are also the hours it can hear Earth directly, so moonseal makes sure only its own team can command it.</p>
   <button class="why-teaser" id="heroWhy" type="button" aria-haspopup="dialog">
     <svg class="wt-art" viewBox="0 0 46 46" aria-hidden="true">
       <rect x=".5" y=".5" width="45" height="45" rx="12" fill="rgba(12,14,20,.6)" stroke="rgba(255,179,64,.35)"/>

@@ -66,7 +66,7 @@ This path needs no wallet and no devnet SOL. The page funds a throwaway payer wi
 
    Then set `registry` in `web/app/onchain-config.js` to the value of `$REGISTRY`.
 
-4. Reload the page, open **Command**, press **Sign & send**, then **Verify the ticket on Solana**. The page tries the local validator first and falls back to devnet.
+4. Reload the page, open **Command**, press **Sign & send**, then **Check it on Solana**. The page tries the local validator first and falls back to devnet.
 
 5. Optional: run the five on-chain cases from the command line (honest, replay, forged key, other base, tampered). Every line should say `PASS`:
 
@@ -91,7 +91,7 @@ The page uses devnet when no local validator answers. On devnet it pays fees wit
    cp web/solana-demo-config.example.js web/solana-demo-config.js
    ```
 
-3. Reload the page and run **Command**, **Sign & send**, **Verify the ticket on Solana**. A run takes about 30 seconds on devnet and ends with links to the verifying and authorizing transactions on Solana Explorer.
+3. Reload the page and run **Command**, **Sign & send**, **Check it on Solana**. A run takes about 30 seconds on devnet and ends with links to the verifying and authorizing transactions on Solana Explorer.
 
 Use a disposable key with devnet SOL only. Anyone who can load your page can read the key.
 

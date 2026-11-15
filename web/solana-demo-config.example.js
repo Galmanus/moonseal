@@ -1,4 +1,4 @@
-/* Devnet demo payer for the "Verify the ticket on Solana" button (web/app/command.js) and web/solana-demo.html.
+/* Devnet demo payer for the "Check it on Solana" button (web/app/command.js) and web/solana-demo.html.
    The real file, web/solana-demo-config.js, is NOT in the repository: it holds a private key.
 
    To run the on-chain demo against Solana devnet:

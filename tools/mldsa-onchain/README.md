@@ -38,7 +38,7 @@ signed version cost ~400k CU per NTT (13.5M CU total) vs 3.4M CU unsigned.
 solana-test-validator --reset --ledger /tmp/lcwval/ledger \
   --bpf-program 3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7 target/deploy/mldsa_onchain.so
 ```
-The site (web/app.html, Command -> "Verify the ticket on Solana") uses it automatically.
+The site (web/app.html, Command -> "Check it on Solana") uses it automatically.
 
 ## Consumer rule
 A program that trusts a buffer must check: owner == this program, magic/version, stage == DONE,
@@ -77,7 +77,7 @@ Not audited. Verification only. Constant-time is not needed (all inputs public).
 Program `3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7` (upgrade authority F9neSDGm...). Example verifying
 transactions (log `moonseal: ML-DSA-65 VERIFIED`):
 - CLI (`solana/client/devnet-moonseal.mjs`): https://explorer.solana.com/tx/2aoMkbkzJmtJ4fBaBZGdUQ2jNUvu4mxg2B9SSsk2CkpJfoixzvQSiGcqk1aDCr9NnhaqBppEaP2BtcESGCxiRZ7x?cluster=devnet
-- from the web page (stage 3, "Verify the ticket on Solana"): https://explorer.solana.com/tx/3RuqMfaR6uXBac5Wdic5KMxoWNQHTGUvJ2rhpbTS9sNXEuancAxaC8PPYyHX8YcAS2RqFjMUe7TVpG2tYxV4TMAg?cluster=devnet
+- from the web page (stage 3, "Check it on Solana"): https://explorer.solana.com/tx/3RuqMfaR6uXBac5Wdic5KMxoWNQHTGUvJ2rhpbTS9sNXEuancAxaC8PPYyHX8YcAS2RqFjMUe7TVpG2tYxV4TMAg?cluster=devnet
 
 Command gate on devnet (program upgraded at signature 5fLtoYqjJiEcVLmBxMktwonBdTadmEXbkwNrVBUhjTUtAj5dnoE8ESkTo2ax9KWRzMkTqyJEjCyCKDTQhrCxgk6s,
 program data extended by 24,064 B): registry `2QYth8MJoLCdRgWckS6QTcjjvBoESFcsohRrLxeAoQN6`, authority F9neSDGm...,

@@ -11,5 +11,5 @@ echo "program size: $(stat -c%s target/deploy/mldsa_onchain.so) bytes"
 read -r -p "deploy to devnet now? [y/N] " a; [ "$a" = "y" ] || exit 0
 solana program deploy -u devnet -k "$WALLET" --program-id keys/mldsa_onchain-keypair.json \
   --with-compute-unit-price 50000 target/deploy/mldsa_onchain.so
-echo "done. the site's 'Verify the ticket on Solana' now finds it on devnet."
+echo "done. the site's 'Check it on Solana' now finds it on devnet."
 echo "if it stalls (devnet congestion): rerun with --buffer <BUFFER> as you did for lunar_contacts."

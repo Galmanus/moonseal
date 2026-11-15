@@ -4,7 +4,7 @@
 |---|---|
 | Event | NASA Space Apps Challenge 2026, Florianópolis, Brazil (in person, 14-15 November 2026) |
 | Challenge | #11, Lunar Landing Site Navigator |
-| Project | moonseal: land in the light, command with a post-quantum seal |
+| Project | moonseal: Land in the light. Stay in command. |
 | Code | <https://github.com/Galmanus/moonseal> (MIT) |
 
 ## The challenge, as we read it
@@ -13,9 +13,13 @@ Build a tool that helps compare lunar south-pole landing sites and dates by illu
 
 ## Summary
 
-Mission planners choosing a lunar south-pole landing site must know, per site and per date, when the Sun is up (power) and when Earth is above the horizon (direct-to-Earth contact). moonseal answers that in the browser, from real NASA data: a live Moon lit by the real Sun for any date, the south pole's LOLA terrain with ray-marched shadows, a skyline view from any site with the Sun and Earth on it, a two-year availability timeline, time to sunset and Earthset, and a plain-language verdict for a mission of N days. You can pick a curated site (NASA crewed-landing candidate regions, IM-1, IM-2, Chandrayaan-3, Apollo, MoonDAO's Moon Base Zero) or tap anywhere on the Moon.
+moonseal is a free web planner that shows, hour by hour through 2026 and 2027, when a landing site at the Moon's south pole gives a lander sunlight to charge and Earth in view to call home.
 
-It then follows the decision through to the first command. A command can only reach the lander inside a window the planner computes. moonseal signs it with ML-DSA-65 and encrypts it with ML-KEM-768, in the browser or natively in an Android app. A Solana program verifies the signature on chain and checks the base's registry before an open network of ground stations may relay it.
+Pick a site, or tap any spot on the Moon, and choose how long the mission stays. moonseal checks the Sun and Earth against that spot's real skyline, using NASA JPL Horizons positions and LRO LOLA terrain, and marks in green every hour you could land without losing sunlight or Earth for longer than your lander can handle. A plain verdict says "Good time to land", "Risky" or "Not a good time", and why.
+
+Those Earth-in-view hours are also when the lander can take orders straight from Earth. So moonseal makes sure only its own team can give them: each command carries a signature NIST standardized to resist quantum computers, and a program on Solana's test network refuses forged or replayed commands, in public.
+
+It matters because landers are heading to the south pole for the water ice its craters may hold, and there the Sun and Earth skim the horizon: the wrong ridge or the wrong hour means no power or no radio.
 
 ## How moonseal meets the challenge
 
@@ -32,10 +36,10 @@ Methods and validation are in [planner.md](planner.md).
 
 ## What moonseal adds beyond the brief
 
-The planner's output is a contact window. moonseal uses that window as the gate for the lander's commands, then protects the command itself:
+The planner's green hours are also when the lander can hear Earth directly. moonseal follows that through to the first command:
 
-- **Unforgeable and private for the mission's life:** ML-DSA-65 and ML-KEM-768 ([post-quantum.md](post-quantum.md)).
-- **A policy no single operator holds:** a Solana program verifies the signature and applies the base's registry of authorized keys and replay counter ([onchain.md](onchain.md)). It is live on devnet, with receipts for an authorized command and for refused forged and replayed ones.
+- **No one else can forge or read it:** each command is signed with ML-DSA-65 and sealed with ML-KEM-768, NIST's standards designed to resist quantum computers ([post-quantum.md](post-quantum.md)).
+- **The base decides who may command it, in public:** a program on Solana checks the signature against the base's list of authorized keys and a replay counter ([onchain.md](onchain.md)). It is live on devnet, Solana's test network, with public records of an authorized command and of refused forged and replayed ones.
 - **A hybrid seal:** your Solana wallet vouches for the post-quantum key with an ed25519 attestation.
 
 ## A five-minute walkthrough
@@ -46,8 +50,8 @@ The planner's output is a contact window. moonseal uses that window as the gate 
 4. Press **Stand here** for the skyline, with the Sun and Earth on it.
 5. Compare with **Malapert Massif** (Earth in view all year, by a 0.10° margin) and **de Gerlache Rim 2** (a 688 h night).
 6. On the opening screen, open **Why the south pole** for the science, with sources.
-7. Open **Command**. If Earth is below the skyline, press **Jump to the next contact window**. Press **Sign & send**, then **Verify the ticket on Solana**. The chain answers VERIFIED and AUTHORIZED, and the stations relay.
-8. Switch the scenario to **Forged**, **Replay an old packet** or **Tampered in transit** and send again. Each fails at a different gate, and the chain's refusals come with Explorer links.
+7. Open **Command**. If Earth is below the skyline, press **Jump to the next contact window**. Press **Sign & send**, then **Check it on Solana**. The chain answers VERIFIED and AUTHORIZED, and the stations relay.
+8. Switch the scenario to **Forged by an attacker**, **Replay an old command** or **Changed on the way** and send again. Each is refused at a different check, and the chain's refusals come with Explorer links.
 
 ## Use of artificial intelligence
 

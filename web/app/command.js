@@ -21,11 +21,11 @@ window.Command = (function () {
     ['SAFE_MODE', 'Enter safe mode']
   ];
   var MODES = [
-    ['honest', 'Honest uplink'],
-    ['tamper', 'Tampered in transit'],
-    ['forged', 'Forged (unregistered key)'],
-    ['replay', 'Replay an old packet'],
-    ['blackout', 'Send during a blackout']
+    ['honest', 'Real command'],
+    ['tamper', 'Changed on the way'],
+    ['forged', 'Forged by an attacker'],
+    ['replay', 'Replay an old command'],
+    ['blackout', 'Send while Earth is hidden']
   ];
 
   function hex(b, n) { var s = ''; for (var i = 0; i < Math.min(b.length, n || b.length); i++) s += b[i].toString(16).padStart(2, '0'); return s; }
@@ -104,9 +104,9 @@ window.Command = (function () {
       else if (st.op.native) sig = b64d(await BRIDGE.signMLDSA(td.decode(payload)));
       else sig = D.sign(payload, st.op.secretKey);
       signMs = ms(t0);
-      stage('s1', mode === 'forged' ? 'Attacker signs' : (st.op.native ? 'Signed on this phone (native)' : 'Signed with the operator key (this browser)'),
+      stage('s1', mode === 'forged' ? 'Attacker signs' : (st.op.native ? 'Signed on this phone (native)' : 'Signed by the lander’s team (this browser)'),
         mode === 'forged' ? 'The attacker knows the lander’s public key and the format, but not the operator’s private key, so it signs with its own.'
-                          : 'ML-DSA-65 (FIPS 204) over the command, the counter and the planned hour.',
+                          : 'The signature covers the command, a counter and the planned hour. ML-DSA-65 (FIPS 204).',
         [['signature', fmtB(sig.length)], ['sign time', signMs], ['counter', String(counter)]]);
       await sleep(380);
       t0 = performance.now();
@@ -118,7 +118,7 @@ window.Command = (function () {
       ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, cat(len, payload, sig)));
       encMs = ms(t0);
       packet = cat(kemCt, iv, ct);
-      stage('s2', 'Encrypted for the lander', 'ML-KEM-768 (FIPS 203) agrees a fresh key that only the lander can recover; AES-256-GCM seals command + signature.',
+      stage('s2', 'Sealed for the lander', 'Only the lander can open it. ML-KEM-768 (FIPS 203) agrees a fresh key; AES-256-GCM seals the command and its signature.',
         [['KEM ciphertext', fmtB(kemCt.length)], ['uplink packet', fmtB(packet.length)], ['telecommand frames', '≈ ' + Math.ceil(packet.length / 1024) + ' × 1,024 B'], ['encrypt time', encMs]]);
     }
     await sleep(380);
@@ -140,9 +140,9 @@ window.Command = (function () {
     var h = new Uint8Array(await crypto.subtle.digest('SHA-256', relayed));
     st.relayedSha = hex(h);
     stage('s3', 'Relayed by an untrusted station', mode === 'tamper' ? 'A compromised station flips one bit before uplinking. It cannot read or re-sign the packet.'
-      : 'The station sees only ciphertext. It relays only packets the base’s registry on Solana has AUTHORIZED.',
+      : 'The ground station can’t read it. It relays only what the base’s list on Solana has authorized.',
       [['packet SHA-256', hex(h, 8) + '…'], ['uplink ticket', 'ML-DSA-65 · ' + fmtB(st.ticket.sig.length)]]);
-    $('#s3 .st-f').insertAdjacentHTML('beforeend', '<button class="btn chain-btn" id="chainBtn"><span class="sol-dot"></span>Verify the ticket on Solana</button><div class="chain-log num" id="chainLog"></div>');
+    $('#s3 .st-f').insertAdjacentHTML('beforeend', '<button class="btn chain-btn" id="chainBtn"><span class="sol-dot"></span>Check it on Solana</button><div class="chain-log num" id="chainLog"></div>');
     $('#chainBtn').onclick = function () {
       onChain().catch(function (e) {
         var busy = /\b429\b|too many requests/i.test(e.message);
@@ -158,8 +158,8 @@ window.Command = (function () {
 
     /* ---- the lander ---- */
     var gates = [], ok = true, los = lineOfSight(site, t), body = null, rsig = null, rpayload = null;
-    gates.push(['Line of sight to Earth', los.up, los.up ? 'Earth ' + los.margin.toFixed(2) + '° above the skyline at ' + site.name
-      : 'Earth is below the skyline: the uplink never reaches the lander' + (los.next.inH != null ? '. Next window opens in ' + dur(los.next.inH) : '')]);
+    gates.push(['Earth in view', los.up, los.up ? 'Earth ' + los.margin.toFixed(2) + '° above the skyline at ' + site.name
+      : 'Earth is below the skyline: the uplink never reaches the lander' + (los.next.inH != null ? '. Next window opens in ' + dur(los.next.inH) : ''), 'Earth was hidden']);
     ok = los.up;
     if (ok) {
       try {
@@ -167,25 +167,25 @@ window.Command = (function () {
         var ss = K.decapsulate(rk, st.lander.secretKey);
         var key2 = await crypto.subtle.importKey('raw', ss, 'AES-GCM', false, ['decrypt']);
         body = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: riv }, key2, rct));
-        gates.push(['Decrypt (ML-KEM-768 + AES-GCM)', true, 'Only the lander’s key opens it; any change in transit breaks the seal']);
-      } catch (e) { gates.push(['Decrypt (ML-KEM-768 + AES-GCM)', false, 'Seal broken: the packet was altered in transit']); ok = false; }
+        gates.push(['Seal intact', true, 'Only the lander’s key opens it (ML-KEM-768 + AES-GCM); any change on the way breaks it', 'the seal was broken']);
+      } catch (e) { gates.push(['Seal intact', false, 'Seal broken: the packet was changed on the way', 'the seal was broken']); ok = false; }
     }
     if (ok && st.attest) {                    // hybrid seal: the key that must have signed was attested by the wallet
       var attested = st.attest.ok && st.attest.keyHash === await sha256hex(st.op.publicKey);
-      gates.push(['Key attested by the operator’s wallet (ed25519)', attested, attested
+      gates.push(['Key vouched for by the wallet', attested, attested
         ? st.attest.wallet + ' vouched for this ML-DSA-65 key'
-        : 'No valid wallet attestation for this key']);
+        : 'No valid wallet attestation for this key', 'the wallet did not vouch for this key']);
       ok = attested;
     }
     if (ok) {
       var L = (body[0] << 8) | body[1]; rpayload = body.subarray(2, 2 + L); rsig = body.subarray(2 + L);
       var t0v = performance.now(), good = D.verify(rsig, rpayload, st.op.publicKey), vMs = ms(t0v);
-      gates.push(['Signature (ML-DSA-65)', good, good ? 'Made with the operator key · verified in ' + vMs : 'Not signed by the operator key · rejected in ' + vMs]);
+      gates.push(['Signed by its own team', good, good ? 'ML-DSA-65 signature from the team’s key · verified in ' + vMs : 'Not signed with the team’s key · refused in ' + vMs, 'not signed by its own team']);
       ok = good;
     }
     if (ok) {
       var c = JSON.parse(td.decode(rpayload)).counter, fresh = c > st.lastAccepted;
-      gates.push(['Fresh counter', fresh, fresh ? 'Counter ' + c + ' is new' : 'Counter ' + c + ' was already used: replay rejected']);
+      gates.push(['Not a replay', fresh, fresh ? 'Counter ' + c + ' is new' : 'Counter ' + c + ' was already used', 'a replayed command']);
       ok = fresh;
       if (ok) { st.lastAccepted = c; st.lastPacket = { packet: packet, payload: rpayload, counter: c }; }
     }
@@ -323,7 +323,7 @@ window.Command = (function () {
     var v = $('#cmdVerdict');
     v.className = 'cmd-verdict ' + (ok ? 'ok' : 'bad');
     var label = COMMANDS.find(function (c) { return c[0] === cmd; });
-    v.textContent = ok ? 'EXECUTED · ' + (label ? label[1] : cmd) : 'REJECTED · ' + gates.filter(function (g) { return !g[1]; }).map(function (g) { return g[0]; })[0];
+    v.textContent = ok ? 'EXECUTED · ' + (label ? label[1] : cmd) : 'REFUSED · ' + gates.filter(function (g) { return !g[1]; }).map(function (g) { return g[3] || g[0]; })[0];
   }
 
   function open() {
@@ -348,24 +348,24 @@ window.Command = (function () {
     host.id = 'cmd'; host.setAttribute('role', 'dialog'); host.setAttribute('aria-modal', 'true');
     host.innerHTML =
       '<div class="cmd-sheet glass glass-strong">' +
-      '<div class="cmd-head"><div><div class="eyebrow">Post-quantum · end to end · Solana</div><h2>Command the lander</h2>' +
-      '<p class="cmd-sub">Real <b>ML-DSA-65</b> (FIPS 204) and <b>ML-KEM-768</b> (FIPS 203) running in this browser. The planner decides when a command can physically reach the Moon.</p>' +
+      '<div class="cmd-head"><div><div class="eyebrow">Stay in command</div><h2>Command the lander</h2>' +
+      '<p class="cmd-sub">A command reaches the lander only while Earth is in view. It is <b>signed</b> so no one else can forge it, with a signature designed to hold even against future quantum computers, <b>sealed</b> so only the lander can read it, and <b>checked on Solana</b> against the base’s list of who may command it. Real cryptography, running in this browser.</p>' +
       '<div class="cmd-ctx num" id="cmdCtx"></div><div class="cmd-keys num" id="cmdKeys">Generating keys…</div>' +
       '<button class="btn cmd-jump" id="cmdJump" hidden></button>' +
-      '<div class="cmd-wallet"><button class="btn wallet-btn" id="walletBtn"><span class="sol-dot"></span>Connect your Solana wallet</button><span class="wallet-line" id="walletLine">Optional: your Solana wallet’s classical key attests the post-quantum key. Hybrid seal.</span></div></div>' +
+      '<div class="cmd-wallet"><button class="btn wallet-btn" id="walletBtn"><span class="sol-dot"></span>Connect your Solana wallet</button><span class="wallet-line" id="walletLine">Optional: let your Solana wallet vouch for the signing key, as a second lock.</span></div></div>' +
       '<button class="icon-btn" id="cmdClose" aria-label="Close">✕</button></div>' +
       '<div class="cmd-ctrl"><select id="cmdSel" aria-label="Command">' + COMMANDS.map(function (c) { return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('') + '</select>' +
       '<div class="seg cmd-modes" role="group" aria-label="Scenario">' + MODES.map(function (m, i) { return '<button data-mode="' + m[0] + '" aria-pressed="' + (i === 0) + '">' + m[1] + '</button>'; }).join('') + '</div>' +
       '<button class="btn light" id="cmdSend">Sign &amp; send</button></div>' +
       '<div class="cmd-pipe">' +
-      ['s1|1 · Operator', 's2|2 · Encrypt', 's3|3 · Ground station on Solana', 's4|4 · The Moon'].map(function (p) {
+      ['s1|1 · You sign', 's2|2 · Sealed', 's3|3 · Relayed, checked on Solana', 's4|4 · On the Moon'].map(function (p) {
         var a = p.split('|'); return '<div class="st" id="' + a[0] + '"><div class="st-k">' + a[1] + '</div><div class="st-t">Waiting</div><div class="st-x"></div><div class="st-f"></div></div>';
       }).join('') + '</div>' +
       '<div class="cmd-verdict" id="cmdVerdict"></div>' +
       '<div class="cmd-why">' +
-      '<div><h4>Why sign post-quantum</h4><p>A lander lives for decades on keys set before launch. Today’s links share secret keys, which survive quantum computers but don’t scale to many operators and relays. Public-key command authority does, and it must stay unforgeable for the asset’s whole life: that is ML-DSA.</p></div>' +
-      '<div><h4>Why encrypt post-quantum</h4><p>Anyone can record the uplink today. ML-KEM keeps it unreadable even after large quantum computers exist: “harvest now, decrypt later” is an encryption risk, and this is the encryption leg.</p></div>' +
-      '<div><h4>What Solana does, and doesn’t</h4><p>Solana coordinates an open network of ground stations: who relays which window, and a tamper-evident hash of what was sent. Stations never see the command and can’t forge one. Solana’s own ed25519 is not the root of trust; the operator’s ML-DSA key is.</p></div>' +
+      '<div><h4>Why no one can forge it</h4><p>A lander works for years on keys set before launch. A shared secret key cannot be handed to many operators and relay stations without letting them make commands too. A signature can: anyone checks it, only the team can make it. ML-DSA is NIST’s signature standard designed to stay unforgeable even when quantum computers arrive.</p></div>' +
+      '<div><h4>Why no one else can read it</h4><p>Anyone can record the radio uplink today and try to break it years from now. ML-KEM, NIST’s key-exchange standard designed against quantum computers, keeps the recording unreadable.</p></div>' +
+      '<div><h4>What Solana does</h4><p>Solana keeps the base’s list of who may command it, and a public record of every command it authorized or refused. Ground stations never see the command and can’t forge one. Solana’s own keys are not the root of trust; the team’s ML-DSA key is.</p></div>' +
       '</div>' +
       '<div class="cmd-foot">Interop checked: ML-DSA-65 signatures made by this page verify in BouncyCastle 1.81 (Java), and BouncyCastle signatures verify here. ' +
       'Uplink packet = KEM ciphertext + nonce + sealed (command + signature). <a href="solana-demo.html" target="_blank" rel="noopener">Anchor a relay proof on Solana devnet →</a></div>' +

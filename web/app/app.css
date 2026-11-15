@@ -375,7 +375,24 @@ html.lowfx #panel { background: rgba(12, 12, 14, 0.94); }
 .btn.pq { background: linear-gradient(135deg, rgba(125,255,176,.16), rgba(94,177,255,.16)); border: 1px solid rgba(125,255,176,.28); color: var(--fg); margin-top: 8px; }
 .pq-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--both); box-shadow: 0 0 10px var(--both); display: inline-block; }
 .chip.pqchip { display: inline-flex; align-items: center; gap: 8px; border-color: rgba(125,255,176,.35); background: rgba(125,255,176,.10); }
-#cmd, #seal { position: fixed; z-index: 55; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.55); }
+#cmd, #seal, #proof { position: fixed; z-index: 55; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.55); }
+#proof { z-index: 57; }
+.seal-next { margin: 14px 0 6px; padding: 14px 16px; border-radius: 18px; background: rgba(50,215,75,.06); border: 1px solid rgba(50,215,75,.28); }
+.seal-next[hidden] { display: none; }
+.sn-k { font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--good); font-weight: 700; margin-bottom: 10px; }
+.sn-row { display: flex; flex-wrap: wrap; gap: 8px; } .sn-row .btn[hidden] { display: none; }
+.sn-out { margin-top: 10px; font-size: .86rem; color: var(--fg2); line-height: 1.5; word-break: break-all; } .sn-out a { color: var(--earth); }
+.sn-out .okc { color: var(--good); } .sn-out .badc { color: var(--warn, #ffb340); }
+.proof-sheet { max-width: 860px; }
+.proof-wait { color: var(--fg2); }
+.proof-checks { display: grid; gap: 8px; margin: 6px 0 16px; }
+.proof-checks > div { display: flex; gap: 10px; align-items: center; font-size: .92rem; }
+.proof-checks i { width: 10px; height: 10px; border-radius: 50%; flex: none; } .proof-checks .ok i { background: var(--good); box-shadow: 0 0 9px var(--good); } .proof-checks .bad i { background: var(--bad); box-shadow: 0 0 9px var(--bad); }
+.proof-checks a, .proof-foot a { color: var(--earth); }
+.proof-finding { border-radius: 18px; padding: 14px 18px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+.proof-finding h3 { margin: 0 0 8px; font-size: 1.2rem; }
+.proof-finding dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: .9rem; } .proof-finding dt { color: var(--fg3); } .proof-finding dd { margin: 0; }
+.proof-foot { margin-top: 14px; color: var(--fg3); font-size: .8rem; font-family: var(--mono); word-break: break-all; }
 .seal-pipe { grid-template-columns: repeat(3, 1fr); }
 .seal-try { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin: 6px 0 4px; font-size: .9rem; color: var(--fg2); }
 .seal-try .okc { color: var(--good); } .seal-try .badc { color: var(--bad); }

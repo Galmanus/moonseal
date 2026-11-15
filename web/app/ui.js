@@ -702,7 +702,15 @@
     }
     btn.disabled = false;
   }
-  function openSeal(s) { if (window.Seal) { Seal.open(sealFinding(s)); updateSteps(3); } }
+  function openSeal(s) {
+    if (!window.Seal || !s) return;
+    var f = sealFinding(s), m = Model.compute(s), h = Math.max(0, Math.min(N - 1, Math.round(LunarEphem.hoursSinceT0(new Date(f.land_utc)))));
+    var sp = LunarEphem.subpoints(h);
+    var los = sp ? { lat: s.lat, lon: s.lon, elevM: s.elev_m || 0, earthLat: sp.earthLat, earthLon: sp.earthLon, earthDistKm: sp.earthDistKm, hour: h,
+      skyline: m.hz && m.hz.length ? Array.from(m.hz) : [0] } : null;
+    Seal.open(f, { los: los, plannerEarth: los ? m.earUp[h] === 1 : null });
+    updateSteps(3);
+  }
   /* Three steps, one at a time: 1 choose a site (the ranked list), 2 when to land (the site's answer), 3 seal it. */
   function updateSteps(n) { document.querySelectorAll('#bar .seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.step === n)); }); }
   function goStep(n) {

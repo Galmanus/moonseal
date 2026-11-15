@@ -29,8 +29,14 @@ window.FieldGuide = (function () {
     nps_denali: ['US National Park Service, “Denali” (20,310 ft; three and one-half vertical miles above its base)', 'https://www.nps.gov/articles/denali.htm'],
     wmo: ['WMO Weather and Climate Extremes Archive: lowest temperature, −89.2 °C, Vostok Station, Antarctica, 21 July 1983', 'https://wmo.int/asu-map?map=Temp_020'],
     iceland: ['NASA, “NASA’s Artemis II Crew Uses Iceland Terrain for Lunar Training”', 'https://science.nasa.gov/missions/artemis/nasas-artemis-ii-crew-uses-iceland-terrain-for-lunar-training/'],
-    arizona: ['NASA, “Behind the Scenes of a NASA ‘Moonwalk’ in the Arizona Desert”', 'https://science.nasa.gov/missions/artemis/behind-the-scenes-of-a-nasa-moonwalk-in-the-arizona-desert/']
+    arizona: ['NASA, “Behind the Scenes of a NASA ‘Moonwalk’ in the Arizona Desert”', 'https://science.nasa.gov/missions/artemis/behind-the-scenes-of-a-nasa-moonwalk-in-the-arizona-desert/'],
+    diviner: ['NASA LRO Diviner, Polar Resource Product: annual maximum and average temperature and ice depth on a polar mesh (Paige et al. 2010, Science 330, 479). PDS data set LRO-L-DLRE-5-PRP-V2.0', 'https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/'],
+    grailmap: ['NASA GRAIL GRGM1200A free-air gravity anomaly map, degree 660, on a 1,738 km reference sphere (PDS)', 'https://pds-geosciences.wustl.edu/grail/grail-l-lgrs-5-rdr-v1/grail_1001/rsdmap/gggrx_1200a_anom_l660.lbl'],
+    usgs: ['USGS Gazetteer of Planetary Nomenclature: IAU-approved Moon feature names, centres and diameters (public domain)', 'https://planetarynames.wr.usgs.gov/']
   };
+  var EMPTY = { diviner: {}, grail: {}, names: [] };
+  function D() { return window.MOONSEAL_SITE_DATA || EMPTY; }   // web/app/site-data.js (NASA PDS + USGS, precomputed)
+  var KIND = { AA: 'crater', SF: 'satellite crater', MO: 'mountain', LC: 'lacus (dark plain)' };
   var CREDIT = 'NASA/GSFC/Arizona State University';
 
   /* ---------------------------------------------------------------- curated sites */
@@ -91,6 +97,24 @@ window.FieldGuide = (function () {
   function deg(x) { return (x < 0 ? '−' : '+') + Math.abs(x).toFixed(1) + '°'; }
   function dur(h) { if (h < 48) return h + ' h'; var d = Math.floor(h / 24), r = h - d * 24; return d + ' d' + (r ? ' ' + r + ' h' : ''); }
   function fmt(n, d) { return n.toLocaleString('en', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 }); }
+  function kc(k) { var c = Math.round(k - 273.15); return Math.round(k) + ' K (' + (c < 0 ? '−' + (-c) : c) + ' °C)'; }
+  function gcKm(lat1, lon1, lat2, lon2) {
+    var r = Math.PI / 180, a = Math.sin(lat1 * r) * Math.sin(lat2 * r) + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.cos((lon2 - lon1) * r);
+    return R_REF * Math.acos(Math.max(-1, Math.min(1, a)));
+  }
+  // IAU-named features (USGS Gazetteer) nearest to a site, by distance from the site to each feature's centre
+  function nearby(site, n) {
+    if (site.lat > -74) return [];
+    return D().names.map(function (f) { return { f: f, d: gcKm(site.lat, site.lon, f[1], f[2]) }; })
+      .sort(function (a, b) { return a.d - b.d; }).slice(0, n || 5);
+  }
+  function relation(x) {
+    var f = x.f, r = f[3] / 2;
+    if (!r || (f[4] !== 'AA' && f[4] !== 'SF')) return '';
+    if (x.d < 0.85 * r) return ', the site is inside it';
+    if (x.d <= 1.15 * r) return ', the site is on or near its rim';
+    return ', so its rim is about ' + fmt(x.d - r, 1) + ' km away';
+  }
 
   var cache = {};
   function conditions(site) {
@@ -143,9 +167,43 @@ window.FieldGuide = (function () {
       '<div class="fg-gravity"><div class="fg-k">Surface gravity</div><div class="fg-gv"><b class="num">' + c.g.toFixed(3) + ' m/s²</b><span>' + (c.g / G_N).toFixed(3) + ' of Earth’s standard gravity, about one sixth</span></div>' +
         '<p>A 1,000 kg lander weighs ' + fmt(Math.round(weight)) + ' N here, against ' + fmt(Math.round(1000 * G_N)) + ' N on Earth. ' +
         'Point-mass estimate from GRAIL’s GM' + C.cite('grail') + ' at ' + (c.hasElev ? 'the site’s distance from the Moon’s center (reference radius 1,737.4 km' + C.cite('factsheet') + ' plus its elevation)' : 'the reference radius of 1,737.4 km' + C.cite('factsheet') + ' (no elevation data for this point)') +
-        '; Earth’s standard gravity is 9.80665 m/s²' + C.cite('nist') + '. Local gravity anomalies are not included.</p></div>' +
-      (site.lat <= -75.2 ? '<div class="fg-temp"><div class="fg-k">Temperature, regional</div><p>Some permanently shadowed crater floors near the pole reach about −203 °C, while nearby sunlit areas can be much warmer' + C.cite('region') + '. moonseal has no per-site temperature measurement.</p></div>' : '') +
+        '; Earth’s standard gravity is 9.80665 m/s²' + C.cite('nist') + '. ' + anomalyText(site, c, C) + '</p></div>' +
+      temperatureBlock(site, C) +
       '<div class="cap">Computed by moonseal for every hour of 2026: Sun and Earth from JPL Horizons, ' + (c.terrain ? 'skyline ray-cast from NASA LOLA terrain' : 'bare-sphere horizon (outside the polar terrain map)') + '. Elevation ranges are above the flat horizon; whether the Sun or Earth is up also depends on the skyline.</div>';
+  }
+
+  // GRAIL: how much this region's mass distribution changes gravity (precomputed for the curated sites)
+  function anomalyText(site, c, C) {
+    var a = D().grail[site.id];
+    if (!a) return 'Local gravity anomalies are not included for this point.';
+    var rel = a.anom_mgal * 1e-5 / c.g * 100;
+    return 'Measured from orbit by GRAIL, the local free-air anomaly here is ' + (a.anom_mgal < 0 ? '−' : '+') + fmt(Math.abs(a.anom_mgal), 1) + ' mGal (±' + fmt(a.err_mgal, 1) + '): the mass of this region pulls about ' +
+      Math.abs(rel).toFixed(2) + '% ' + (a.anom_mgal < 0 ? 'less' : 'more') + ' than a smooth Moon would, on the 1,738 km reference sphere' + C.cite('grailmap') + ' (1 mGal = 0.00001 m/s²).';
+  }
+
+  // Diviner: measured per-site temperatures and ice stability where the polar product covers the site
+  function temperatureBlock(site, C) {
+    var d = D().diviner[site.id];
+    if (!d) {
+      return site.lat <= -75.2 ? '<div class="fg-temp"><div class="fg-k">Temperature, regional</div><p>Some permanently shadowed crater floors near the pole reach about −203 °C, while nearby sunlit areas can be much warmer' + C.cite('region') + '. No per-site temperature is precomputed for this point; moonseal ships Diviner values for the curated south-polar sites.</p></div>' : '';
+    }
+    var ice = d.ice_depth_m === 0 ? 'stable at the surface' : d.ice_depth_m < 0 ? 'not stable in the top 2.9 m' : 'stable below ' + fmt(d.ice_depth_m, 2) + ' m';
+    return '<div class="fg-temp"><div class="fg-k">Temperature, measured from orbit</div><div class="fg-grid">' +
+      tile('Hottest · surface', kc(d.tmax_k), 'annual maximum') +
+      tile('Average · 2 cm down', kc(d.tavg_k), 'annual mean') +
+      tile('Water ice', ice, 'stable: loses less than 1 kg per m² per billion years') +
+      tile('Nearest cold trap', d.cold_trap_km != null ? fmt(d.cold_trap_km, 1) + ' km' : 'none in range', d.cold_trap_km != null ? 'ice stable at the surface, peak ' + kc(d.cold_trap_tmax_k) : '') +
+      '</div><p>LRO Diviner thermal mapping, one year of polar observations fitted with a thermal model' + C.cite('diviner') + '. Values are for the mesh cell nearest the site (about ' + fmt(d.cell_size_m) + ' m across, centred ' + fmt(d.cell_offset_m) + ' m away); within 1 km the annual maximum ranges from ' + kc(d.tmax_1km_k[0]) + ' to ' + kc(d.tmax_1km_k[1]) + '.</p></div>';
+  }
+
+  function nearbyList(site, C) {
+    var near = nearby(site, 5);
+    if (!near.length) return '';
+    return '<div class="fg-k fg-sub">Named features nearby</div><ul class="fg-list">' + near.map(function (x) {
+      var f = x.f;
+      return '<li><a href="https://planetarynames.wr.usgs.gov/Feature/' + f[5] + '" target="_blank" rel="noopener">' + esc(f[0]) + '</a>, ' + (KIND[f[4]] || 'feature') +
+        (f[3] ? ', ' + fmt(f[3], 1) + ' km across' : '') + ': centre ' + fmt(x.d, 1) + ' km away' + relation(x) + '</li>';
+    }).join('') + '</ul><div class="cap">IAU names, centres and diameters from the USGS Gazetteer of Planetary Nomenclature' + C.cite('usgs') + '; distances computed by moonseal on a 1,737.4 km sphere.</div>';
   }
 
   function earthPane(cur, C, c) {
@@ -166,7 +224,7 @@ window.FieldGuide = (function () {
   function html(site) {
     var cur = CURATED[site.id] || null;
     var tabs = [['cond', 'Conditions']];
-    if (cur) tabs.push(['geo', 'Geology']);
+    if (cur || nearby(site, 1).length) tabs.push(['geo', 'Geology']);
     tabs.push(['earth', 'On Earth']);
     if (cur && cur.images.length) tabs.push(['img', 'Images · ' + cur.images.length]);
     return '<div class="sect fg" id="fieldGuide"><h3>Field guide</h3>' +
@@ -183,7 +241,7 @@ window.FieldGuide = (function () {
       pane.setAttribute('aria-labelledby', 'fgt-' + tab);
       var C = citer(), c = conditions(site), body;
       if (tab === 'cond') body = conditionsPane(site, c, C);
-      else if (tab === 'geo') body = cur.geology.map(function (t) { return '<p class="fg-p">' + C.text(t) + '</p>'; }).join('');
+      else if (tab === 'geo') body = (cur ? cur.geology.map(function (t) { return '<p class="fg-p">' + C.text(t) + '</p>'; }).join('') : '') + nearbyList(site, C);
       else if (tab === 'earth') body = earthPane(cur, C, c);
       else body = imagesPane(cur);
       pane.innerHTML = body + C.list();

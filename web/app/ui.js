@@ -110,7 +110,7 @@
     // one obvious first step (the headline site, NASA's Connecting Ridge), then the two other ways in
     $('#heroChips').innerHTML =
       '<button class="chip primary" id="heroGo">Good days to land ›</button>' +
-      '<button class="chip" id="heroAll">All landing sites</button>' +
+      '<button class="chip" id="heroAll">Rank the sites</button>' +
       '<button class="chip pqchip" id="heroCmd"><span class="pq-dot"></span>Try to hijack a lander</button>';
     $('#heroWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };   // the one entry to the sheet
     $('#heroChips').addEventListener('click', function (e) {
@@ -587,10 +587,41 @@
   }
 
   /* ---------------------------------------------------------------- picker */
+  /* The south-pole sites ranked on the three things a base needs: power (sunlight), water (where ice can last)
+     and radio (Earth in view). Each criterion is ranked on its own and the three ranks are averaged, so each
+     counts the same; ties share a rank. Sunlight and Earth: every hour of 2026-2027 against the LOLA skyline.
+     Water: LRO Diviner, 0 km when ice is stable under the site (top 2.9 m), else the nearest cold trap. */
+  function rankSites() {
+    var dv = (window.MOONSEAL_SITE_DATA || {}).diviner || {};
+    var rows = POLE.map(function (s) {
+      var m = Model.compute(s), d = dv[s.id];
+      var water = !d ? null : d.ice_depth_m >= 0 ? 0 : d.cold_trap_km != null ? d.cold_trap_km : null;
+      return { s: s, sun: m.cS[N] / N * 100, earth: m.cE[N] / N * 100, water: water, under: !!d && d.ice_depth_m >= 0, iceDepth: d ? d.ice_depth_m : null };
+    });
+    function rank(key, better) {
+      rows.forEach(function (r) {
+        r['r_' + key] = r[key] == null ? rows.length : 1 + rows.filter(function (q) { return q[key] != null && better(q[key], r[key]); }).length;
+      });
+    }
+    rank('sun', function (a, b) { return a > b; }); rank('earth', function (a, b) { return a > b; }); rank('water', function (a, b) { return a < b; });
+    rows.forEach(function (r) { r.score = (r.r_sun + r.r_water + r.r_earth) / 3; });
+    return rows.sort(function (a, b) { return a.score - b.score || b.sun - a.sun; });
+  }
   function openPicker() {
     var groups = {};
     SITES.forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
-    var html = '';
+    var rk = rankSites();
+    var html = '<div class="grp">South-pole sites, ranked</div>' +
+      '<div class="rank-note">Ranked on power, water and radio, each counting the same. <b class="sun">Sunlight</b> and <b class="earth">Earth in view</b>: share of every hour in 2026 and 2027, from NASA JPL Horizons and LRO LOLA terrain. ' +
+      '<b class="ice">Ice</b>: where water ice can last, from LRO Diviner: under the site, or the distance to the nearest cold trap.</div>' +
+      '<div class="rank-h"><span>#</span><span>Site</span><span class="sun">Sunlight</span><span class="ice">Ice</span><span class="earth">Earth</span></div>' +
+      rk.map(function (r, i) {
+        var ice = r.water == null ? '–' : r.under ? 'under it' : r.water.toFixed(1) + ' km';
+        return '<button class="rank-row" data-id="' + r.s.id + '" title="' + esc(r.s.name) + (r.under ? ': ice can last ' + r.iceDepth.toFixed(2) + ' m below the surface' : '') + '">' +
+          '<span class="rk">' + (i + 1) + '</span><span class="nm">' + esc(r.s.name.replace(/\s*\(.*\)$/, '')) + '</span>' +
+          '<span class="v">' + Math.round(r.sun) + '%</span><span class="v">' + ice + '</span><span class="v">' + Math.round(r.earth) + '%</span></button>';
+      }).join('') +
+      '<div class="grp">All sites</div>';
     Object.keys(groups).forEach(function (g) {
       html += '<div class="grp">' + esc(g) + '</div>';
       groups[g].forEach(function (s) {
@@ -602,7 +633,7 @@
     $('#pickerBody').innerHTML = html;
     $('#picker').hidden = false;
     $('#pickerBody').onclick = function (e) {
-      var b = e.target.closest('.site-row'); if (b) selectSite(SITES.find(function (x) { return x.id === b.dataset.id; }));
+      var b = e.target.closest('.site-row, .rank-row'); if (b) selectSite(SITES.find(function (x) { return x.id === b.dataset.id; }));
     };
     $('#cGo').onclick = function () {
       var la = parseFloat($('#cLat').value.replace('−', '-')), lo = parseFloat($('#cLon').value.replace('−', '-'));

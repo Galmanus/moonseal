@@ -28,7 +28,7 @@ What it does: pick any spot near the pole and how long the mission stays. moonse
 | Illumination | Sun above the LOLA skyline per hour, sunlight %, longest night, shadows on the globe |
 | Earth visibility | Earth above the skyline per hour, Earth %, longest blackout, Earth drawn in the skyline view |
 | Real data | JPL Horizons (DE441), LRO LOLA, LROC WAC color, PGDA 5 m site DEMs ([data-sources.md](data-sources.md)) |
-| Something a planner can act on | A verdict for a chosen mission length and a comparison across sites |
+| Something a planner can act on | A verdict for a chosen mission length, the next good time to land, and the south-pole sites ranked on power, water and radio |
 
 Methods and validation are in [planner.md](planner.md).
 

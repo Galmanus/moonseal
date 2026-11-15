@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>moonseal · pick the right day to land on the Moon’s south pole</title>
-<meta name="description" content="moonseal helps a mission to the Moon’s south pole twice. Before landing, it shows which days a lander will have sunlight for power and a clear line to Earth for radio, from NASA data. After landing, it makes sure nobody can hijack it.">
+<meta name="description" content="moonseal helps a mission to the Moon’s south pole twice. Before landing, it shows which days a lander will have sunlight for power and a clear line to Earth for radio, from NASA data. When you find one, it seals it on Solana: a post-quantum signed, public proof of the site and the day.">
 <meta name="theme-color" content="#000000">
 <link rel="icon" type="image/svg+xml" href="app/brand/moonseal-favicon.svg">
 <link rel="stylesheet" href="app/app.css">
@@ -20,7 +20,7 @@
     <button data-view="hero" aria-pressed="true">Moon</button>
     <button data-view="pole" aria-pressed="false">South Pole</button>
     <button data-view="site" aria-pressed="false">Site</button>
-    <button data-view="command" aria-pressed="false" title="Send the lander a command only its own team could have signed">Command</button>
+    <button data-view="command" aria-pressed="false" title="Seal what you found: signed post-quantum, recorded in public on Solana">Seal</button>
   </nav>
   <button class="when-chip" id="whenBtn" aria-label="Change date and time"><span class="dot"></span><span id="whenTxt" class="num">…</span></button>
   <button class="icon-btn" id="mapBtn" title="Map: where the Sun and Earth are above the horizon" aria-pressed="false"><span aria-hidden="true">◐</span><span class="ib-l">Map</span></button>
@@ -32,7 +32,7 @@
 <section id="hero" aria-labelledby="heroTitle">
   <div class="eyebrow">NASA Space Apps 2026 · Lunar Landing Site Navigator</div>
   <h1 id="heroTitle">Pick the <span class="good">right day</span> to land on the Moon’s south pole.</h1>
-  <p class="lede">There the Sun barely rises and Earth hides behind the mountains. Land on the wrong day and your lander runs out of power or loses contact with Earth. moonseal shows, for any spot, the good days to land, from NASA data. And once it lands, moonseal makes sure nobody can hijack it.</p>
+  <p class="lede">There the Sun barely rises and Earth hides behind the mountains. Land on the wrong day and your lander runs out of power or loses contact with Earth. moonseal shows, for any spot, the good days to land, from NASA data. Found a good one? moonseal seals it: your finding, signed with a post-quantum signature and recorded in public on Solana, as proof of what you found and when.</p>
   <button class="why-teaser" id="heroWhy" type="button" aria-haspopup="dialog">
     <svg class="wt-art" viewBox="0 0 46 46" aria-hidden="true">
       <rect x=".5" y=".5" width="45" height="45" rx="12" fill="rgba(12,14,20,.6)" stroke="rgba(255,179,64,.35)"/>
@@ -102,6 +102,7 @@
 <script src="solana-demo-config.js"></script>
 <script src="app/onchain-config.js"></script>
 <script src="app/command.js"></script>
+<script src="app/seal.js"></script>
 <script src="app/why-pole.js"></script>
 </body>
 </html>

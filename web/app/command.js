@@ -348,7 +348,7 @@ window.Command = (function () {
     host.id = 'cmd'; host.setAttribute('role', 'dialog'); host.setAttribute('aria-modal', 'true');
     host.innerHTML =
       '<div class="cmd-sheet glass glass-strong">' +
-      '<div class="cmd-head"><div><div class="eyebrow">Keep control of your lander</div><h2>Send a command, or try to hijack it</h2>' +
+      '<div class="cmd-head"><div><div class="eyebrow">Keep control of your lander</div><h2>Command the lander</h2>' +
       '<p class="cmd-sub">Commands from the lander’s own team go through. A command <b>changed on the way</b>, <b>forged</b> by an attacker or <b>replayed</b> from the past is refused, by the lander and in public on Solana. Each command is signed with NIST’s new signature standard, built to resist even future quantum computers, and sealed so only the lander can read it. Real cryptography, running in this browser.</p>' +
       '<div class="cmd-ctx num" id="cmdCtx"></div><div class="cmd-keys num" id="cmdKeys">Generating keys…</div>' +
       '<button class="btn cmd-jump" id="cmdJump" hidden></button>' +
@@ -382,5 +382,5 @@ window.Command = (function () {
   }
 
   build();
-  return { open: open, close: close, send: send, state: st };
+  return { open: open, close: close, send: send, state: st, chain: { loadScript: loadScript, pickNetwork: pickNetwork, payerFor: payerFor } };
 })();

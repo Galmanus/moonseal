@@ -1,8 +1,8 @@
 # moonseal
 
-**Land on the right day. Keep control of your lander.**
+**Find the right day to land. Seal it on Solana.**
 
-moonseal helps a mission to the Moon's south pole twice. Before landing, it shows which days a lander will have sunlight for power and a clear line to Earth for radio, hour by hour through 2026 and 2027, from NASA JPL Horizons and LRO LOLA data. After landing, it makes sure nobody can hijack it. Every command carries a signature designed to resist quantum computers, and a program on Solana's test network refuses forged or replayed ones.
+moonseal finds the right day to land at the Moon's south pole: it shows which days a lander will have sunlight for power and a clear line to Earth for radio, hour by hour through 2026 and 2027, from NASA JPL Horizons and LRO LOLA data. When you find a good one, moonseal seals it: the finding is signed with ML-DSA-65, NIST's post-quantum signature, and a program on Solana's test network verifies it and keeps it in public, as proof of what was found and when.
 
 Why: at the south pole the Sun barely rises and Earth hides behind the mountains, so a lander that touches down on the wrong day can run out of power or go silent.
 
@@ -17,8 +17,7 @@ NASA Space Apps Challenge 2026 · Challenge #11, Lunar Landing Site Navigator ·
 - **Shows the good days to land.** Pick a curated site or tap any point on the Moon, choose how long to stay, and moonseal marks every good time to land in 2026 and 2027: the hours when the Sun and Earth clear the real skyline, without gaps longer than your lander can handle. It works from JPL Horizons and LOLA data, entirely in your browser.
 - **Ranks the south-pole sites on power, water and radio.** Sunlight and Earth in view over every hour of 2026 and 2027, and where water ice can last (LRO Diviner: under the site, or the distance to the nearest cold trap), each counting the same. MoonDAO's Moon Base Zero comes first.
 - **Gives each site a field guide.** Conditions (sunlight, Earth in view, longest night, slope, surface gravity), geology, comparisons with places on Earth, and LRO images of the site, each with its source.
-- **Makes sure nobody can hijack the lander.** A command reaches the lander only while Earth is in view. It is signed so no one else can forge it, with ML-DSA-65 (NIST FIPS 204, designed to resist quantum computers), and sealed so only the lander can read it, with ML-KEM-768 (FIPS 203). In the browser, or natively in an Android app.
-- **Lets the base decide, in public, who may command it.** A program on Solana checks the signature, then the base's list of authorized keys and a replay counter. A valid signature from a key that is not on the list is refused on chain, and the refusal is a public record. It runs on Solana devnet, the test network.
+- **Seals what you found.** Press **Seal this site on Solana**: moonseal signs the finding (the site, the good time to land, the stay, what the planner measured, the NASA data) with ML-DSA-65 in your browser, and the moonseal program on Solana verifies the signature on chain. The finding's bytes stay in the public transactions, and the seal id is sha256(key, signature, finding). Change one character and the seal no longer matches. The same program can also gate a base's commands with a list of authorized keys ([post-quantum.md](docs/post-quantum.md)).
 
 ## Try it
 

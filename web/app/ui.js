@@ -111,12 +111,12 @@
     $('#heroChips').innerHTML =
       '<button class="chip primary" id="heroGo">Good days to land ›</button>' +
       '<button class="chip" id="heroAll">Rank the sites</button>' +
-      '<button class="chip pqchip" id="heroCmd"><span class="pq-dot"></span>Try to hijack a lander</button>';
+      '<button class="chip pqchip" id="heroSeal"><span class="pq-dot"></span>Seal a site on Solana</button>';
     $('#heroWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };   // the one entry to the sheet
     $('#heroChips').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       if (b.id === 'heroAll') return openPicker();
-      if (b.id === 'heroCmd') return window.Command && Command.open();
+      if (b.id === 'heroSeal') { var top = rankSites()[0].s; selectSite(top); return openSeal(top); }
       if (b.id === 'heroGo') selectSite(SITES.find(function (x) { return x.id === 'connecting_ridge'; }));
     });
   }
@@ -184,12 +184,12 @@
         '<div class="meter"><div class="row"><span>Earth in view during the stay (radio)</span><b class="num" id="mEar"></b></div><div class="bar earth"><span id="bEar"></span></div></div>' +
         '<button class="btn wide light" id="nextGood">Find the next good time to land</button>' +
         '<p class="hint">On the timeline below, <b>green</b> marks every good time to land. Press ▶ to watch the Sun and Earth move.</p>' +
+        '<button class="btn wide pq seal-cta" id="cmdOpen"><span class="pq-dot"></span>Seal this site on Solana</button>' +
       '</div>' +
       '<div class="sect"><h3 style="display:flex;align-items:center">The view from the site' + (s.terrain ? '<button class="btn" id="standBtn" style="margin-left:auto;padding:6px 11px;font-size:.78rem;text-transform:none;letter-spacing:0">Stand here</button>' : '') + '</h3><canvas id="skyline"></canvas>' +
         '<div class="cap">' + (s.terrain ? 'The grey line is the real horizon seen from this spot, from NASA LOLA terrain. The Sun or Earth is up when it clears that line.' : 'Outside the south-pole terrain map: this site uses a flat horizon.') + '</div></div>' +
       '<div class="sect"><h3>Other sites, same dates</h3><div class="cmp-list" id="cmp"></div></div>' +
       moondaoCard(s) +
-      '<button class="btn wide pq" id="cmdOpen"><span class="pq-dot"></span>Try to hijack this lander</button>' +
       '<details class="more"><summary>More details</summary>' +
         '<div class="sect"><h3 id="nowHead">Right now</h3><div class="cards">' +
           '<div class="card sun" id="cSun"><div class="k"><i></i>Sun</div><div class="v num" id="sunEl">…</div><div class="s" id="sunTxt">…</div><div class="s dim" id="sunSub"></div></div>' +
@@ -218,7 +218,7 @@
     $('#panelBody').querySelectorAll('[data-batt]').forEach(function (b) { b.onclick = function () { state.need.battH = Math.max(0, state.need.battH + (+b.dataset.batt)); needChanged(); }; });
     $('#panelBody').querySelectorAll('[data-gap]').forEach(function (b) { b.onclick = function () { state.need.gapH = Math.max(0, state.need.gapH + (+b.dataset.gap)); needChanged(); }; });
     $('#nextGood').onclick = findNextGood;
-    $('#cmdOpen').onclick = function () { if (window.Command) Command.open(); };
+    $('#cmdOpen').onclick = function () { openSeal(state.site); };
     setDur(state.durD, true);
   }
   function setDur(d, quiet) {
@@ -607,6 +607,27 @@
     rows.forEach(function (r) { r.score = (r.r_sun + r.r_water + r.r_earth) / 3; });
     return rows.sort(function (a, b) { return a.score - b.score || b.sun - a.sun; });
   }
+
+  /* What gets sealed: the site, the good time to land for the chosen stay (now if it is one, else the next one in
+     2026-2027) and what the planner measured over that stay. Seal.open signs it (ML-DSA-65) and records it on Solana. */
+  function sealFinding(s) {
+    if (!s) return null;
+    var m = Model.compute(s), g = Model.goodStarts(m, state.durD * 24, state.need), t = Math.floor(state.t);
+    var h = g[t] ? t : Model.nextGood(g, t + 1), wins = 0;
+    for (var i = 0; i < g.length; i++) if (g[i] && (i === 0 || !g[i - 1])) wins++;
+    var at = h == null ? t : h, ms = Model.mission(m, at, state.durD * 24);
+    return {
+      moonseal: 'landing-site finding', v: 1,
+      site: s.name, lat: Math.round(s.lat * 1e4) / 1e4, lon_e: Math.round(s.lon * 1e4) / 1e4,
+      land_utc: LunarEphem.dateAt(at).toISOString().slice(0, 16) + 'Z', stay_days: state.durD,
+      verdict: h == null ? 'no good time to land in 2026-2027' : 'good time to land',
+      sunlight_pct: Math.round(ms.sunPct * 1000) / 10, earth_pct: Math.round(ms.earthPct * 1000) / 10,
+      good_windows_2026_2027: wins,
+      data: 'NASA JPL Horizons (DE441) + LRO LOLA LDEM_75S_240M',
+      found_utc: new Date().toISOString().slice(0, 19) + 'Z'
+    };
+  }
+  function openSeal(s) { if (window.Seal) Seal.open(sealFinding(s)); }
   function openPicker() {
     var groups = {};
     SITES.forEach(function (s) { (groups[s.group] = groups[s.group] || []).push(s); });
@@ -646,7 +667,7 @@
   /* ---------------------------------------------------------------- about */
   function openAbout() {
     $('#aboutBody').innerHTML =
-      '<h2 id="aboutTitle">How moonseal works</h2><p>moonseal helps a mission to the Moon’s south pole twice. Before landing, it shows which days a lander will have sunlight for power and a clear line to Earth for radio. After landing, it makes sure nobody can hijack it. Everything you see is computed from public NASA data; nothing is hand-drawn or AI-generated.</p>' +
+      '<h2 id="aboutTitle">How moonseal works</h2><p>moonseal finds the right day to land at the Moon’s south pole: the days a lander will have sunlight for power and a clear line to Earth for radio. When you find one, it seals it: your finding, signed with a post-quantum signature and recorded in public on Solana. Everything you see is computed from public NASA data; nothing is hand-drawn or AI-generated.</p>' +
       '<h4>Sun and Earth positions</h4><p>JPL Horizons (DE441) gives the sub-solar and sub-Earth points on the Moon, hourly, 2026–2027, in the same Moon-fixed frame as the LOLA terrain. Your browser turns them into azimuth and elevation for any site, including Earth’s parallax and the Moon’s libration. Checked against direct Horizons queries at 4 sites, every hour of 2026 (8,761 h each): elevation error at most <b>0.0007°</b>; Earth azimuth at most 0.006°.</p>' +
       '<h4>The skyline</h4><p>LOLA <code>LDEM_75S_240M</code> (240 m/pixel). For each site the horizon is ray-cast over 360° (three rays per degree through the continuous surface, plus every DEM pixel binned by azimuth) with the Moon’s curvature, so a high ridge sees past the edge of the sphere: its horizon dips below 0°. There is no atmosphere, so no refraction. A body is “up” when its centre clears the skyline.</p>' +
       '<h4>Checks we ran</h4><ul>' +
@@ -655,7 +676,7 @@
         '<li>The engine has tests (<code>core/tests</code>), including one that caught a skyline too low on steep slopes; that bug is fixed.</li></ul>' +
       '<h4>The picture</h4><p>Global color: LRO LROC WAC mosaic (NASA SVS CGI Moon Kit, 8K). Global relief: LOLA <code>ldem_16</code>. The south-pole cap is real LOLA geometry; its shadows are ray-marched toward the real Sun on the selected date, with a penumbra the width of the true solar disk (0.53°). The Sun + Earth map runs the same horizon test for every pixel. In “Stand here”, Earth (NASA Blue Marble) and the Sun are drawn at their true size and position; Earth’s phase is real, but which continents face the Moon comes from a low-precision formula and is only illustrative.</p>' +
       '<h4>What this is not</h4><ul><li>Not a NASA product, and not flight-qualified. 240 m terrain misses boulders and local slopes; site results are for the point given.</li><li>“Up” means line of sight, not a closed link budget: antenna masks, DSN scheduling and relays are out of scope.</li><li>Malapert’s near-continuous Earth view rests on a thin margin (+0.10° at its worst hour in 2026).</li></ul>' +
-      '<h4>Why nobody can hijack it</h4><p>Each command is signed so no one else can forge it, with a signature designed to hold even against future quantum computers, and a program on Solana checks the sender against the base’s list. In detail: commands are signed with <b>ML-DSA-65</b> (FIPS 204) and encrypted with <b>ML-KEM-768</b> (FIPS 203), in your browser (@noble/post-quantum 0.7.1) or natively in an Android app (BouncyCastle 1.81); signatures interoperate both ways. A Solana program verifies ML-DSA-65 <b>on chain</b>: a key and signature do not fit one transaction and one verification costs about 3.4M compute units, so, like our Vineland STARK verifier, the data is written into a buffer account in chunks and verified in stages, each transaction under 1.4M units (11–12 transactions in total). Tested in the Solana VM, on a local validator and live on Solana devnet (<a href="https://explorer.solana.com/address/3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7?cluster=devnet" target="_blank" rel="noopener">program on Explorer</a>); tampered signatures are rejected.</p>' +
+      '<h4>Sealing what you found</h4><p>Press <b>Seal this site on Solana</b> on a site: moonseal signs the finding (the site, the good time to land, the stay, what the planner measured, the NASA data) with <b>ML-DSA-65</b> (FIPS 204), the NIST signature standard built to resist future quantum computers, using a key kept in your browser (@noble/post-quantum 0.7.1). Change one character and the signature no longer matches. A Solana program verifies ML-DSA-65 <b>on chain</b>: a key and signature do not fit one transaction and one verification costs about 3.4M compute units, so, like our Vineland STARK verifier, the data is written into a buffer account in chunks and verified in stages, each transaction under 1.4M units (11–12 transactions in total). Tested in the Solana VM, on a local validator and live on Solana devnet (<a href="https://explorer.solana.com/address/3ieMTX6qafSSwMgdeu8QGCRox1bK84emdwEuD6RShbd7?cluster=devnet" target="_blank" rel="noopener">program on Explorer</a>); tampered signatures are rejected. The seal id is sha256(key, signature, finding), computed by the program and by the page.</p>' +
       '<h4>MoonDAO</h4><p>Moon Base Zero, MoonDAO’s open-source base on the Shackleton–de Gerlache connecting ridge, is included as a site at its exact centre. Their scene runs the Sun on phases without dates; moonseal maps the real Sun and Earth onto it for any hour of 2026–2027. Not affiliated with or endorsed by MoonDAO.</p>' +
       '<h4>Open source</h4><p>MIT license. The pipeline (<code>core/</code>) rebuilds every number and texture from the NASA sources; the on-chain verifier is in <code>tools/mldsa-onchain</code>. <a href="index.html" style="color:var(--earth)">The earlier command console</a> lives on a separate page.</p>' +
       '<button class="btn" id="aboutClose" style="margin-top:12px">Close</button>';
@@ -709,7 +730,7 @@
   function wire() {
     document.querySelectorAll('#bar .seg button').forEach(function (b) {
       b.onclick = function () {
-        if (b.dataset.view === 'command') { if (window.Command) Command.open(); return; }
+        if (b.dataset.view === 'command') { if (state.site) openSeal(state.site); else { openPicker(); toast('Pick a site, then seal it'); } return; }
         setView(b.dataset.view);
       };
     });

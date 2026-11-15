@@ -114,13 +114,12 @@
     }).join('');
     html += '<button class="chip primary" id="heroAll">All landing sites</button>';
     html += '<button class="chip pqchip" id="heroCmd"><span class="pq-dot"></span>Post-quantum command</button>';
-    html += '<button class="chip whychip" id="heroWhy"><span class="why-dot"></span>Why the south pole?</button>';
     $('#heroChips').innerHTML = html;
+    $('#heroWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };   // the one entry to the sheet
     $('#heroChips').addEventListener('click', function (e) {
       var b = e.target.closest('button'); if (!b) return;
       if (b.id === 'heroAll') return openPicker();
       if (b.id === 'heroCmd') return window.Command && Command.open();
-      if (b.id === 'heroWhy') return window.WhyPole && WhyPole.open();
       selectSite(SITES.find(function (x) { return x.id === b.dataset.site; }));
     });
   }
@@ -186,6 +185,7 @@
       '</div></div>' +
       '<div class="sect"><h3 style="display:flex;align-items:center">The view from the site' + (s.terrain ? '<button class="btn" id="standBtn" style="margin-left:auto;padding:6px 11px;font-size:.78rem;text-transform:none;letter-spacing:0">Stand here</button>' : '') + '</h3><canvas id="skyline"></canvas>' +
         '<div class="cap">' + (s.terrain ? 'The jagged line is the real skyline, ray-cast from NASA LOLA terrain. The Sun or Earth counts as up when its centre clears it.' : 'Outside the south-pole terrain map: this site uses the bare-sphere horizon.') + '</div></div>' +
+      (window.FieldGuide ? FieldGuide.html(s) : '') +
       '<div class="sect"><h3>If you land at the selected time</h3>' +
         '<div class="mission-row"><label>Stay</label><span class="stepper"><button data-dur="-1" aria-label="Shorter">−</button><span class="num" id="durTxt"></span><button data-dur="1" aria-label="Longer">+</button></span></div>' +
         '<div class="presets" id="presets"><button data-d="7">1 week</button><button data-d="14">1 lunar day · 14 d</button><button data-d="60">2 months</button></div>' +
@@ -201,10 +201,9 @@
         '<button class="btn wide pq" id="cmdOpen"><span class="pq-dot"></span>Command this lander · post-quantum</button>' +
       '</div>' +
       '<div class="sect"><h3>Compare sites for the same landing</h3><div class="cmp-list" id="cmp"></div></div>' +
-      '<div class="why-cta"><button class="linkbtn" id="panelWhy">Why the south pole? Light, ice and line of sight ›</button></div>' +
       '<div class="cap" style="margin-top:14px">' + src + '</div>';
     $('#closeSite').onclick = closeSite;
-    $('#panelWhy').onclick = function () { if (window.WhyPole) WhyPole.open(); };
+    if (window.FieldGuide) FieldGuide.mount($('#panelBody'), s);
     var tm = $('#toMbz'); if (tm) tm.onclick = function () { selectSite(SITES.find(function (x) { return x.id === 'moon_base_zero'; })); };
     var sb = $('#standBtn');
     if (sb) sb.onclick = function () {
@@ -593,7 +592,6 @@
   function openAbout() {
     $('#aboutBody').innerHTML =
       '<h2 id="aboutTitle">How moonseal works</h2><p>Everything you see is computed from public NASA data. Nothing is hand-drawn or AI-generated.</p>' +
-      '<p><button class="linkbtn" id="aboutWhy">New to the Moon’s south pole? Why everyone is going there ›</button></p>' +
       '<h4>Sun and Earth positions</h4><p>JPL Horizons (DE441) gives the sub-solar and sub-Earth points on the Moon, hourly, 2026–2027, in the same Moon-fixed frame as the LOLA terrain. Your browser turns them into azimuth and elevation for any site, including Earth’s parallax and the Moon’s libration. Checked against direct Horizons queries at 4 sites, every hour of 2026 (8,761 h each): elevation error at most <b>0.0007°</b>; Earth azimuth at most 0.006°.</p>' +
       '<h4>The skyline</h4><p>LOLA <code>LDEM_75S_240M</code> (240 m/pixel). For each site the horizon is ray-cast over 360° (three rays per degree through the continuous surface, plus every DEM pixel binned by azimuth) with the Moon’s curvature, so a high ridge sees past the edge of the sphere: its horizon dips below 0°. There is no atmosphere, so no refraction. A body is “up” when its centre clears the skyline.</p>' +
       '<h4>Checks we ran</h4><ul>' +
@@ -608,7 +606,6 @@
       '<button class="btn" id="aboutClose" style="margin-top:12px">Close</button>';
     $('#about').style.display = 'grid';
     $('#aboutClose').onclick = closeAbout;
-    $('#aboutWhy').onclick = function () { closeAbout(); if (window.WhyPole) WhyPole.open(); };
   }
   function closeAbout() { $('#about').style.display = 'none'; }
 
@@ -640,7 +637,6 @@
     document.querySelectorAll('#bar .seg button').forEach(function (b) {
       b.onclick = function () {
         if (b.dataset.view === 'command') { if (window.Command) Command.open(); return; }
-        if (b.dataset.view === 'why') { if (window.WhyPole) WhyPole.open(); return; }
         setView(b.dataset.view);
       };
     });

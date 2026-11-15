@@ -22,7 +22,6 @@
     <button data-view="pole" aria-pressed="false">South Pole</button>
     <button data-view="site" aria-pressed="false">Site</button>
     <button data-view="command" aria-pressed="false" title="Post-quantum command to the lander, gated by line of sight">Command</button>
-    <button data-view="why" aria-pressed="false" title="Why land at the Moon’s south pole: light, ice and line of sight">Why the pole</button>
   </nav>
   <button class="when-chip" id="whenBtn" aria-label="Change date and time"><span class="dot"></span><span id="whenTxt" class="num">…</span></button>
   <button class="icon-btn" id="mapBtn" title="Map: where the Sun and Earth are above the horizon" aria-pressed="false">◐</button>
@@ -35,6 +34,18 @@
   <div class="eyebrow">NASA Space Apps 2026 · Lunar Landing Site Navigator</div>
   <h1 id="heroTitle">Land where the <span class="sun">Sun</span> stays up and <span class="earth">Earth</span> stays in view.</h1>
   <p class="lede">At the Moon’s south pole the Sun skims the horizon and Earth bobs in and out of sight. Pick a site and a date to see power and direct-to-Earth contact, computed from real NASA ephemeris and terrain. Then command it with a post-quantum seal: signed on a Solana Seeker, verified by a Solana program.</p>
+  <button class="why-teaser" id="heroWhy" type="button" aria-haspopup="dialog">
+    <svg class="wt-art" viewBox="0 0 46 46" aria-hidden="true">
+      <rect x=".5" y=".5" width="45" height="45" rx="12" fill="rgba(12,14,20,.6)" stroke="rgba(255,179,64,.35)"/>
+      <circle cx="11" cy="28" r="5.5" style="fill:var(--sun)"/>
+      <path d="M2 30 L14 30 L21 22.5 L27 30 C30 38.5 36 38.5 39 30 L44 30 L44 44 L2 44 Z" fill="#191b22"/>
+      <path d="M27 30 C30 38.5 36 38.5 39 30 Z" fill="#05060a"/>
+      <circle cx="33" cy="33.2" r="1.25" fill="#9fd3ff"/>
+      <path d="M2 30 L14 30 L21 22.5 L27 30 C30 38.5 36 38.5 39 30 L44 30" fill="none" stroke="#d6d6dc" stroke-width="1.5" stroke-linejoin="round"/>
+    </svg>
+    <span class="wt-txt"><span class="wt-k">Why the south pole</span><span class="wt-h"><span class="wt-long">Ridges in near-constant sunlight, crater floors cold enough to keep ice for billions of years, and hills that decide whether a lander can talk to Earth.</span><span class="wt-short">Sunlit ridges, ice-cold craters, hills that block Earth.</span></span></span>
+    <span class="wt-go" aria-hidden="true">›</span>
+  </button>
   <div class="chips" id="heroChips"></div>
   <div class="hero-foot">Sunlight shown for <b id="heroWhen">…</b>, from JPL Horizons. Terrain: LRO LOLA. Color: LRO LROC.</div>
 </section>
@@ -84,6 +95,7 @@
 <script src="app/spring.js"></script>
 <script src="app/globe.js"></script>
 <script src="app/model.js"></script>
+<script src="app/field-guide.js"></script>
 <script src="app/ui.js"></script>
 <script src="app/pq-bundle.js"></script>
 <script src="solana-demo-config.js"></script>

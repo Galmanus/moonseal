@@ -9,6 +9,7 @@ NASA Space Apps Challenge 2026 · Challenge #11, Lunar Landing Site Navigator ·
 ## What it does
 
 - **Finds when a south-pole site has power and a line to Earth.** For any curated site, any point you tap on the Moon, and any hour of 2026 and 2027, moonseal computes when the Sun and Earth stand above the real terrain horizon. It works from JPL Horizons ephemerides and LOLA topography, entirely in your browser.
+- **Gives each site a field guide.** Conditions (sunlight, Earth in view, longest night, slope, surface gravity), geology, comparisons with places on Earth, and LRO images of the site, each with its source.
 - **Seals the command to the lander.** Commands are signed with ML-DSA-65 (FIPS 204) and encrypted with ML-KEM-768 (FIPS 203), in the browser or on a Solana Seeker phone. The lander executes a command only inside a contact window the planner computed.
 - **Lets the base decide, on chain, who may command it.** A Solana program verifies the ML-DSA-65 signature, then checks the base's registry of authorized keys and a replay counter. A valid signature from an unregistered key is refused on chain, and the refusal is a public receipt.
 
@@ -162,6 +163,7 @@ docs/                    documentation
 ## Credits and disclaimers
 
 - **NASA data:** JPL Horizons (DE441); LRO LOLA LDEM_75S_240M and ldem_16; LRO LROC WAC color mosaic via NASA SVS CGI Moon Kit #4720; NASA PGDA LOLA 5 m/px south-pole site DEMs (Barker et al. 2021); NASA Blue Marble (SVS #2915). This project uses NASA data and is not endorsed by NASA.
+- **LRO images in the field guide:** Lunar Reconnaissance Orbiter Narrow Angle Camera frames, credit NASA/GSFC/Arizona State University (LROC terms: educational use with credit).
 - **MoonDAO:** Moon Base Zero's coordinates come from MoonDAO's open-source repository (commit `0a9d527`). moonseal is not affiliated with or endorsed by MoonDAO.
 - **Solana:** Solana, the Solana Seeker and the Seed Vault are products of their respective owners. moonseal is not affiliated with or endorsed by them.
 - **Use of AI:** an AI coding assistant (Claude) helped write and verify the code. All data is real NASA data, and no imagery is AI-generated.
